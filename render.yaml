@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: scoutkat-backend
+    name: scoutkat-backend-sg
     runtime: python
     region: singapore
     rootDir: backend
@@ -49,7 +49,7 @@ services:
         value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
 
   - type: cron
-    name: scoutkat-cycle
+    name: scoutkat-cycle-sg
     runtime: python
     region: singapore
     rootDir: backend
