@@ -12,6 +12,18 @@ export interface Token {
   is_active: boolean;
 }
 
+export interface WatchtowerToken extends Token {
+  current_price: number;
+  change_1h: number;
+  change_24h: number;
+  signal_type: SignalType | null;
+  signal_score: number | null;
+  confidence: number | null;
+  last_updated: string;
+  why_now: string;
+  recently_changed: boolean;
+}
+
 export interface Explanation {
   why_now: string;
   risks: string[];
@@ -32,4 +44,3 @@ export interface Signal {
   explanation: Explanation;
   invalidation_json: Record<string, unknown>;
 }
-
