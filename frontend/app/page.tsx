@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PixelScoutkat } from "@/components/pixel-scoutkat";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getViewerState } from "@/lib/auth";
@@ -15,6 +16,8 @@ type PublicSample = {
   change1h: number;
   change24h: number;
   signalType: SignalType;
+  divergenceState: string;
+  briefSummary: string;
   performanceSummary: string;
 };
 
@@ -29,6 +32,16 @@ function buildPerformanceSummary(context: TokenContext | null, asset: Watchtower
     return `Current state confidence ${Math.round(asset.confidence * 100)}%`;
   }
   return "Live record building";
+}
+
+function buildBriefSummary(context: TokenContext | null, asset: WatchtowerToken | null) {
+  if (context?.current_signal_state.why_now) {
+    return context.current_signal_state.why_now;
+  }
+  if (asset?.why_now) {
+    return asset.why_now;
+  }
+  return "Live summary still forming from the latest market and social snapshots.";
 }
 
 async function loadPublicSample(symbol: string): Promise<PublicSample | null> {
@@ -47,6 +60,8 @@ async function loadPublicSample(symbol: string): Promise<PublicSample | null> {
       change1h: context.header.change_1h,
       change24h: context.header.change_24h,
       signalType: context.current_signal_state.signal_type,
+      divergenceState: signalLabel(context.current_signal_state.signal_type),
+      briefSummary: buildBriefSummary(context, asset),
       performanceSummary: buildPerformanceSummary(context, asset),
     };
   }
@@ -59,6 +74,8 @@ async function loadPublicSample(symbol: string): Promise<PublicSample | null> {
       change1h: asset.change_1h,
       change24h: asset.change_24h,
       signalType: asset.signal_type,
+      divergenceState: signalLabel(asset.signal_type),
+      briefSummary: buildBriefSummary(null, asset),
       performanceSummary: buildPerformanceSummary(null, asset),
     };
   }
@@ -147,7 +164,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="halftone-panel min-h-[420px] border-t border-white/12 md:min-h-[520px] lg:border-l lg:border-t-0" />
+          <PixelScoutkat />
         </section>
 
         <section className="border-x border-b border-white/12 px-5 py-10 md:px-8">
@@ -157,20 +174,20 @@ export default async function HomePage() {
               <h2 className="display mt-3 text-3xl text-white md:text-4xl">Read the system on BTC and ETH.</h2>
             </div>
             <p className="max-w-md text-xs uppercase tracking-[0.2em] text-white/40">
-              Public cards stay concise on purpose. Full detail lives inside the private workspace.
+              Free cards surface the live read directly: price, divergence state, and a short brief.
             </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             {samples.map((sample) => (
               <Card key={sample.symbol} className="border border-white/12 bg-white/[0.02] p-0">
-                <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr] border-b border-white/12 text-[10px] uppercase tracking-[0.28em] text-white/34">
+                <div className="grid grid-cols-[1.1fr_1fr_1fr_1.45fr] border-b border-white/12 text-[10px] uppercase tracking-[0.28em] text-white/34">
                   <div className="px-5 py-4">Asset</div>
                   <div className="px-5 py-4">Price</div>
-                  <div className="px-5 py-4">Change</div>
-                  <div className="px-5 py-4">Signal</div>
+                  <div className="px-5 py-4">Divergence</div>
+                  <div className="px-5 py-4">Brief</div>
                 </div>
-                <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr]">
+                <div className="grid grid-cols-[1.1fr_1fr_1fr_1.45fr]">
                   <div className="border-r border-white/12 px-5 py-5">
                     <p className="display text-3xl text-white">{sample.symbol}</p>
                     <p className="mt-2 text-xs uppercase tracking-[0.22em] text-white/42">{sample.name}</p>
@@ -178,16 +195,17 @@ export default async function HomePage() {
                   <div className="border-r border-white/12 px-5 py-5">
                     <p className="text-[10px] uppercase tracking-[0.24em] text-white/34">Spot</p>
                     <p className="mt-3 text-xl text-white">{formatPrice(sample.price)}</p>
-                  </div>
-                  <div className="border-r border-white/12 px-5 py-5">
-                    <p className={`text-sm ${changeTone(sample.change1h)}`}>{formatPercent(sample.change1h)} 1h</p>
+                    <p className={`mt-3 text-sm ${changeTone(sample.change1h)}`}>{formatPercent(sample.change1h)} 1h</p>
                     <p className={`mt-2 text-sm ${changeTone(sample.change24h)}`}>{formatPercent(sample.change24h)} 24h</p>
                   </div>
-                  <div className="px-5 py-5">
+                  <div className="border-r border-white/12 px-5 py-5">
                     <span className={`inline-flex px-2 py-1 text-[10px] uppercase tracking-[0.18em] ${signalTone(sample.signalType)}`}>
-                      {signalLabel(sample.signalType)}
+                      {sample.divergenceState}
                     </span>
-                    <p className="mt-4 text-xs leading-6 text-white/56">{sample.performanceSummary}</p>
+                    <p className="mt-4 text-xs leading-6 text-white/46">{sample.performanceSummary}</p>
+                  </div>
+                  <div className="px-5 py-5">
+                    <p className="text-sm leading-7 text-white/58">{sample.briefSummary}</p>
                   </div>
                 </div>
               </Card>
