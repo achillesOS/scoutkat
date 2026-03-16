@@ -243,25 +243,28 @@ class GrokXProvider(GrokProvider):
         return f"scoutkat:grok:{token_symbol.upper()}:{time_window}:{bucket_start.isoformat()}"
 
 
-class MockGrokProvider(GrokProvider):
+class DisabledGrokProvider(GrokProvider):
     async def fetch_social_summary(self, token_symbol: str, time_window: str) -> dict[str, Any]:
         return {
-            "token_symbol": token_symbol,
+            "token_symbol": token_symbol.upper(),
             "time_window": time_window,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "mentions_1h": 182,
-            "mentions_6h": 640,
-            "unique_authors_1h": 94,
-            "mention_acceleration": 0.75,
-            "retail_breadth": 0.72,
-            "expert_presence": 0.31,
-            "narrative_novelty": 0.58,
-            "signal_hint": "narrative_ignition",
-            "confidence": 0.72,
-            "snapshot_incomplete": False,
-            "raw_provider_response": {"provider": "mock", "query_mode": "shortlisted_only"},
+            "mentions_1h": 0,
+            "mentions_6h": 0,
+            "unique_authors_1h": 0,
+            "mention_acceleration": 0.0,
+            "retail_breadth": 0.0,
+            "expert_presence": 0.0,
+            "narrative_novelty": 0.0,
+            "signal_hint": "unclear",
+            "confidence": 0.0,
+            "snapshot_incomplete": True,
+            "raw_provider_response": {
+                "provider": "disabled",
+                "reason": "missing_grok_configuration",
+            },
             "validated_payload": None,
-            "validation_error": None,
+            "validation_error": "Grok provider disabled because GROK_API_URL or GROK_API_KEY is missing.",
         }
 
 

@@ -74,33 +74,15 @@ class HyperliquidHttpProvider(HyperliquidProvider):
         }
 
 
-class MockHyperliquidProvider(HyperliquidProvider):
+class UnavailableHyperliquidProvider(HyperliquidProvider):
     async def fetch_market_snapshot(self, symbol: str) -> dict[str, Any]:
-        return {
-            "symbol": symbol,
-            "timestamp": datetime.now(timezone.utc),
-            "mark_price": 102.4,
-            "mid_price": 102.3,
-            "return_1h": 0.018,
-            "return_4h": 0.041,
-            "volume_1h": 12400000,
-            "volume_24h": 240000000,
-            "trade_imbalance_15m": 0.16,
-            "book_imbalance_top5": 0.09,
-            "absorption_score": 0.67,
-            "price_efficiency": 0.61,
-            "raw": {"provider": "mock"},
-        }
+        raise RuntimeError(
+            f"Hyperliquid provider is unavailable for {symbol}. "
+            "Configure HYPERLIQUID_API_URL to enable live market snapshots."
+        )
 
     async def fetch_positioning_snapshot(self, symbol: str) -> dict[str, Any]:
-        return {
-            "symbol": symbol,
-            "timestamp": datetime.now(timezone.utc),
-            "funding": 0.0006,
-            "funding_zscore": 0.8,
-            "open_interest": 142000000,
-            "oi_change_1h": 0.05,
-            "oi_volume_ratio": 0.73,
-            "overheat_score": 0.38,
-            "raw": {"provider": "mock"},
-        }
+        raise RuntimeError(
+            f"Hyperliquid provider is unavailable for {symbol}. "
+            "Configure HYPERLIQUID_API_URL to enable live positioning snapshots."
+        )

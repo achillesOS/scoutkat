@@ -23,7 +23,11 @@ class TelegramBotProvider(TelegramProvider):
             return response.json()
 
 
-class MockTelegramProvider(TelegramProvider):
+class NoopTelegramProvider(TelegramProvider):
     async def send_signal_alert(self, chat_id: str, message: str) -> dict[str, Any]:
-        return {"status": "queued", "chat_id": chat_id, "message_preview": message[:80]}
-
+        return {
+            "status": "skipped",
+            "reason": "missing_bot_token",
+            "chat_id": chat_id,
+            "message_preview": message[:80],
+        }

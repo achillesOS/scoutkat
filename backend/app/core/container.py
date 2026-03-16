@@ -1,9 +1,9 @@
 from functools import lru_cache
 
 from app.core.config import get_settings
-from app.providers.grok_provider import GrokProvider, GrokXProvider, MockGrokProvider
-from app.providers.hyperliquid_provider import HyperliquidHttpProvider, HyperliquidProvider, MockHyperliquidProvider
-from app.providers.telegram_provider import MockTelegramProvider, TelegramBotProvider, TelegramProvider
+from app.providers.grok_provider import DisabledGrokProvider, GrokProvider, GrokXProvider
+from app.providers.hyperliquid_provider import HyperliquidHttpProvider, HyperliquidProvider, UnavailableHyperliquidProvider
+from app.providers.telegram_provider import NoopTelegramProvider, TelegramBotProvider, TelegramProvider
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.score_repository import ScoreRepository
 from app.repositories.snapshot_repository import SnapshotRepository
@@ -19,23 +19,24 @@ from app.services.scoring_pipeline_service import ScoringPipelineService
 from app.services.signal_pipeline_service import SignalPipelineService
 from app.services.signal_service import SignalService
 from app.services.token_service import TokenService
+from app.services.user_service import UserService
 from app.services.watchlist_service import WatchlistService
 
 
 @lru_cache
 def get_hyperliquid_provider() -> HyperliquidProvider:
-    return HyperliquidHttpProvider() if get_settings().hyperliquid_api_url else MockHyperliquidProvider()
+    return HyperliquidHttpProvider() if get_settings().hyperliquid_api_url else UnavailableHyperliquidProvider()
 
 
 @lru_cache
 def get_grok_provider() -> GrokProvider:
     settings = get_settings()
-    return GrokXProvider(get_cache_service()) if settings.grok_api_url and settings.grok_api_key else MockGrokProvider()
+    return GrokXProvider(get_cache_service()) if settings.grok_api_url and settings.grok_api_key else DisabledGrokProvider()
 
 
 @lru_cache
 def get_telegram_provider() -> TelegramProvider:
-    return TelegramBotProvider() if get_settings().telegram_bot_token else MockTelegramProvider()
+    return TelegramBotProvider() if get_settings().telegram_bot_token else NoopTelegramProvider()
 
 
 @lru_cache
@@ -89,6 +90,10 @@ def get_token_service() -> TokenService:
     return TokenService(
         token_repository=get_token_repository(),
         signal_repository=get_signal_repository(),
+        snapshot_repository=get_snapshot_repository(),
+        x_attention_repository=get_x_attention_repository(),
+        score_repository=get_score_repository(),
+        watchlist_repository=get_watchlist_repository(),
     )
 
 
@@ -148,4 +153,13 @@ def get_watchlist_service() -> WatchlistService:
     return WatchlistService(
         watchlist_repository=get_watchlist_repository(),
         token_repository=get_token_repository(),
+    )
+
+
+@lru_cache
+def get_user_service() -> UserService:
+    return UserService(
+        user_repository=get_user_repository(),
+        token_repository=get_token_repository(),
+        watchlist_repository=get_watchlist_repository(),
     )
