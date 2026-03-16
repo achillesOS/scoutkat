@@ -17,15 +17,24 @@ export async function getViewerState(): Promise<ViewerState> {
     };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
 
-  const onboarding = user?.email ? await getOnboardingState(user.email) : null;
+  const emailFromClaims =
+    claimsData && typeof claimsData.claims?.email === "string" ? claimsData.claims.email : null;
+  let email = emailFromClaims;
+
+  if (!email) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    email = user?.email ?? null;
+  }
+
+  const onboarding = email ? await getOnboardingState(email) : null;
 
   return {
-    isAuthenticated: Boolean(user),
-    email: user?.email ?? null,
+    isAuthenticated: Boolean(email),
+    email,
     hasSupabaseAuth: true,
     onboarding,
   };

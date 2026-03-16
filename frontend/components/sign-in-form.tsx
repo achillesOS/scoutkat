@@ -22,7 +22,7 @@ export function SignInForm() {
 
     setPending(true);
     setMessage(null);
-    const redirectTo = `${window.location.origin}/auth/callback?next=/onboarding`;
+    const redirectTo = `${window.location.origin}/auth/confirm?next=/onboarding`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },
