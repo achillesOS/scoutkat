@@ -1,18 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 export async function GET(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const config = getSupabasePublicConfig();
   const next = request.nextUrl.searchParams.get("next") ?? "/onboarding";
   const redirectUrl = new URL(next, request.url);
 
-  if (!url || !anonKey) {
+  if (!config) {
     return NextResponse.redirect(redirectUrl);
   }
 
   let response = NextResponse.redirect(redirectUrl);
-  const supabase = createServerClient(url, anonKey, {
+  const supabase = createServerClient(config.url, config.publicKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
