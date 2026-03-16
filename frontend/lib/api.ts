@@ -1,11 +1,16 @@
 import type { Signal, Token, TokenContext, WatchtowerOverview } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_TIMEOUT_MS = 8000;
 
 async function fetchJson<T>(path: string, options?: RequestInit): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       cache: "no-store",
+      signal: controller.signal,
       ...options,
     });
     if (!response.ok) {
@@ -14,6 +19,8 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T | nu
     return (await response.json()) as T;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
