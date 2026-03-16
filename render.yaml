@@ -1,0 +1,107 @@
+services:
+  - type: web
+    name: scoutkat-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: starter
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+
+  - type: web
+    name: scoutkat-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ENABLE_SCHEDULER
+        value: "false"
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: HYPERLIQUID_API_URL
+        value: https://api.hyperliquid.xyz
+      - key: GROK_API_URL
+        value: https://api.x.ai/v1/chat/completions
+      - key: GROK_API_KEY
+        sync: false
+      - key: GROK_MODEL
+        value: grok-4-1-fast-non-reasoning
+      - key: GROK_TIMEOUT_SECONDS
+        value: "20"
+      - key: GROK_MAX_RETRIES
+        value: "3"
+      - key: GROK_CACHE_BUCKET_MINUTES
+        value: "30"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_DEFAULT_CHAT_ID
+        sync: false
+      - key: SOCIAL_REFRESH_MINUTES
+        value: "30"
+      - key: ALERT_COOLDOWN_MINUTES
+        value: "90"
+      - key: DEFAULT_USER_EMAIL
+        value: demo@scoutkat.local
+      - key: TRACKED_SYMBOLS
+        value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
+
+  - type: cron
+    name: scoutkat-cycle
+    runtime: python
+    rootDir: backend
+    schedule: "*/10 * * * *"
+    buildCommand: pip install .
+    startCommand: python -m app.jobs.run_cycle
+    plan: starter
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ENABLE_SCHEDULER
+        value: "false"
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: HYPERLIQUID_API_URL
+        value: https://api.hyperliquid.xyz
+      - key: GROK_API_URL
+        value: https://api.x.ai/v1/chat/completions
+      - key: GROK_API_KEY
+        sync: false
+      - key: GROK_MODEL
+        value: grok-4-1-fast-non-reasoning
+      - key: GROK_TIMEOUT_SECONDS
+        value: "20"
+      - key: GROK_MAX_RETRIES
+        value: "3"
+      - key: GROK_CACHE_BUCKET_MINUTES
+        value: "30"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_DEFAULT_CHAT_ID
+        sync: false
+      - key: SOCIAL_REFRESH_MINUTES
+        value: "30"
+      - key: ALERT_COOLDOWN_MINUTES
+        value: "90"
+      - key: DEFAULT_USER_EMAIL
+        value: demo@scoutkat.local
+      - key: TRACKED_SYMBOLS
+        value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE

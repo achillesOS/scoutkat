@@ -1,0 +1,47 @@
+Analyze X discussion for token ${TOKEN_SYMBOL} over the last ${TIME_WINDOW}.
+
+Context:
+- Product: Scoutkat
+- Goal: detect divergence between X attention and Hyperliquid market structure
+- We need structured features, not a general summary
+
+Tasks:
+1. Estimate how intense discussion is
+2. Determine whether attention is rising, flat, falling, or spiking
+3. Determine whether discussion is mainly:
+   - retail_hype
+   - expert_attention
+   - mixed
+   - news_reaction
+   - unclear
+4. Identify whether there is genuinely new information
+5. Identify whether a few higher-signal accounts are repeatedly discussing the asset
+6. Provide a best-effort signal hint:
+   - hidden_accumulation
+   - narrative_ignition
+   - retail_trap
+   - unclear
+
+Return strict JSON only using this schema:
+
+{
+  "token_symbol": "string",
+  "time_window": "string",
+  "mentions_1h_estimate": 0,
+  "mentions_6h_estimate": 0,
+  "unique_authors_1h_estimate": 0,
+  "attention_level": "low|medium|high|extreme",
+  "attention_acceleration": "falling|flat|rising|spiking",
+  "discussion_type": "retail_hype|expert_attention|mixed|news_reaction|unclear",
+  "new_information_present": true,
+  "new_information_summary": ["string"],
+  "retail_breadth_level": "low|medium|high",
+  "expert_presence_level": "low|medium|high",
+  "narrative_novelty": 0,
+  "top_narratives": ["string"],
+  "signal_hint": {
+    "likely_pattern": "hidden_accumulation|narrative_ignition|retail_trap|unclear",
+    "reason": "string"
+  },
+  "confidence": 0.0
+}

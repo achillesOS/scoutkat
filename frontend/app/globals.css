@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 42 33% 96%;
+  --foreground: 192 34% 12%;
+  --card: 0 0% 100%;
+  --border: 34 23% 82%;
+  --muted: 42 20% 90%;
+  --primary: 173 57% 28%;
+  --accent: 24 95% 62%;
+  --font-sans: "Manrope";
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(255, 177, 91, 0.22), transparent 32%),
+    linear-gradient(180deg, #f8f2e8 0%, #f5efe5 55%, #f1eadf 100%);
+  color: hsl(var(--foreground));
+}
+
+.grain {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.24), rgba(255,255,255,0.24)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='%23000000' fill-opacity='0.04'%3E%3Ccircle cx='18' cy='19' r='1'/%3E%3Ccircle cx='62' cy='77' r='1'/%3E%3Ccircle cx='113' cy='35' r='1'/%3E%3Ccircle cx='149' cy='124' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
