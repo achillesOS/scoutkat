@@ -8,7 +8,7 @@ This repo contains the first working scaffold for a solo-developer MVP:
 - `backend/`: FastAPI + APScheduler + provider/service/repository layers
 - `supabase/`: SQL migrations and seed data
 - `docs/`: architecture, implementation phases, and migration notes
-- `render.yaml`: Render Blueprint for frontend, backend, and cron job
+- `render.yaml`: Render Blueprint for backend API and cron job
 
 ## Final Repo Structure
 
@@ -120,9 +120,16 @@ Apply the initial schema in order:
 - Production Grok quota management / secondary fallback provider
 - Final Render environment setup and domain cutover
 
-## Render
+## Deployment
 
-Production deployment is set up for Render with a Blueprint file:
+Production deployment is set up as:
 
-- [render.yaml](/Users/unmercy/Scoutkat/render.yaml)
+- Frontend on Vercel
+- Backend API on Render
+- Scheduled ingestion/scoring on Render Cron
+
+Deployment docs:
+
+- [vercel-deploy.md](/Users/unmercy/Scoutkat/docs/vercel-deploy.md)
 - [render-deploy.md](/Users/unmercy/Scoutkat/docs/render-deploy.md)
+- [render.yaml](/Users/unmercy/Scoutkat/render.yaml)

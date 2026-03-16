@@ -1,16 +1,5 @@
 services:
   - type: web
-    name: scoutkat-frontend
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
-    plan: starter
-    envVars:
-      - key: NEXT_PUBLIC_API_BASE_URL
-        sync: false
-
-  - type: web
     name: scoutkat-backend
     runtime: python
     rootDir: backend
