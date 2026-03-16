@@ -3,7 +3,7 @@ import type { Route } from "next";
 import type { ReactNode } from "react";
 
 const nav = [
-  { href: "/watchlist", label: "Watchlist" },
+  { href: "/watchlist", label: "Watchtower" },
   { href: "/signals", label: "Signals" },
   { href: "/my-edge", label: "My Edge" },
 ] as const satisfies ReadonlyArray<{ href: Route; label: string }>;
@@ -11,10 +11,12 @@ const nav = [
 export function Shell({
   title,
   eyebrow,
+  description,
   children,
 }: {
   title: string;
   eyebrow: string;
+  description?: string;
   children: ReactNode;
 }) {
   return (
@@ -27,7 +29,8 @@ export function Shell({
             </p>
             <h1 className="text-4xl font-black tracking-tight">{title}</h1>
             <p className="mt-3 max-w-2xl text-sm text-foreground/72">
-              Scoutkat scans divergence between X attention, Hyperliquid structure, and perp positioning.
+              {description ??
+                "Scoutkat scans divergence between X attention, Hyperliquid structure, and perp positioning."}
             </p>
           </div>
           <nav className="flex flex-wrap gap-2">
