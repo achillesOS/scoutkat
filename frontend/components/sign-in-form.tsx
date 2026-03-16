@@ -37,7 +37,7 @@ export function SignInForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="text-sm font-semibold text-foreground/70">
+        <label htmlFor="email" className="text-sm font-semibold text-white/70">
           Email
         </label>
         <input
@@ -46,14 +46,14 @@ export function SignInForm() {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-border/70 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary"
+          className="mt-2 w-full border border-white/14 bg-transparent px-4 py-3 text-sm text-white outline-none transition focus:border-white/40"
           placeholder="you@domain.com"
         />
       </div>
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Sending magic link..." : "Send magic link"}
       </Button>
-      {message ? <p className="text-sm text-foreground/62">{message}</p> : null}
+      {message ? <p className="text-sm text-white/58">{message}</p> : null}
     </form>
   );
 }

@@ -38,8 +38,8 @@ export async function completeOnboarding(formData: FormData) {
   });
 
   revalidatePath("/");
-  revalidatePath("/watchlist");
-  redirect("/watchlist");
+  revalidatePath("/app");
+  redirect("/app");
 }
 
 export async function signOutAction() {
@@ -81,6 +81,5 @@ export async function toggleTrackedAsset(formData: FormData) {
   });
 
   revalidatePath("/");
-  revalidatePath("/watchlist");
-  revalidatePath(`/tokens/${tokenSymbol}`);
+  revalidatePath("/app");
 }

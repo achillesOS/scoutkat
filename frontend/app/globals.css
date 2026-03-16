@@ -3,30 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --background: 42 33% 96%;
-  --foreground: 192 34% 12%;
-  --card: 0 0% 100%;
-  --border: 34 23% 82%;
-  --muted: 42 20% 90%;
-  --primary: 173 57% 28%;
-  --accent: 24 95% 62%;
-  --font-sans: "Manrope";
+  --background: 0 0% 4%;
+  --foreground: 0 0% 94%;
+  --card: 0 0% 6%;
+  --border: 0 0% 18%;
+  --muted: 0 0% 9%;
+  --primary: 0 0% 94%;
+  --accent: 43 100% 74%;
+  --font-sans: var(--font-mono);
 }
 
 * {
   border-color: hsl(var(--border));
 }
 
+html {
+  background: #080808;
+}
+
 body {
   background:
-    radial-gradient(circle at top left, rgba(255, 177, 91, 0.22), transparent 32%),
-    linear-gradient(180deg, #f8f2e8 0%, #f5efe5 55%, #f1eadf 100%);
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.06), transparent 28%),
+    linear-gradient(180deg, #070707 0%, #090909 48%, #050505 100%);
   color: hsl(var(--foreground));
+  font-family: var(--font-mono), monospace;
+  letter-spacing: -0.01em;
 }
 
 .grain {
   background-image:
-    linear-gradient(rgba(255,255,255,0.24), rgba(255,255,255,0.24)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='%23000000' fill-opacity='0.04'%3E%3Ccircle cx='18' cy='19' r='1'/%3E%3Ccircle cx='62' cy='77' r='1'/%3E%3Ccircle cx='113' cy='35' r='1'/%3E%3Ccircle cx='149' cy='124' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    linear-gradient(rgba(255,255,255,0.012), rgba(255,255,255,0.012)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='%23ffffff' fill-opacity='0.045'%3E%3Ccircle cx='18' cy='19' r='1'/%3E%3Ccircle cx='62' cy='77' r='1'/%3E%3Ccircle cx='113' cy='35' r='1'/%3E%3Ccircle cx='149' cy='124' r='1'/%3E%3C/g%3E%3C/svg%3E");
 }
 
+.display {
+  font-family: var(--font-display), serif;
+  letter-spacing: -0.04em;
+}
+
+.halftone-panel {
+  background:
+    radial-gradient(circle at 74% 28%, rgba(255,255,255,0.42), transparent 28%),
+    radial-gradient(circle at 82% 72%, rgba(255,255,255,0.18), transparent 24%),
+    radial-gradient(circle, rgba(255,255,255,0.75) 0.8px, transparent 0.8px);
+  background-size: auto, auto, 6px 6px;
+  background-position: center, center, center;
+}
+
+.hairline {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+}

@@ -1,23 +1,28 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Bodoni_Moda, IBM_Plex_Mono } from "next/font/google";
 
 import "./globals.css";
 
-const manrope = Manrope({
+const display = Bodoni_Moda({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-display",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
   title: "Scoutkat",
-  description: "AI-native crypto signal product for X and Hyperliquid divergence",
+  description: "Crypto signal workspace for divergence across attention, structure, and positioning.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={manrope.variable}>{children}</body>
+      <body className={`${display.variable} ${mono.variable}`}>{children}</body>
     </html>
   );
 }
-

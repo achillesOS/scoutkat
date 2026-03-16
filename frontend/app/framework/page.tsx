@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function FrameworkPage() {
-  redirect("/my-edge");
+  redirect("/");
 }

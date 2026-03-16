@@ -23,16 +23,16 @@ export function OnboardingFlow({ tokens }: { tokens: Token[] }) {
 
   return (
     <form action={completeOnboarding} className="grid gap-4">
-      <Card className="rounded-[1.75rem] p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-foreground/45">
+      <Card className="border border-white/12 bg-white/[0.02] p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/45">
           Step {step} of 3
         </p>
 
         {step === 1 ? (
           <>
-            <h2 className="mt-3 text-2xl font-black tracking-tight">Choose tracked assets</h2>
-            <p className="mt-2 max-w-2xl text-sm text-foreground/65">
-              Pick the major Hyperliquid perps you want Scoutkat to monitor first.
+            <h2 className="display mt-3 text-3xl text-white">Choose tracked assets</h2>
+            <p className="mt-2 max-w-2xl text-sm text-white/60">
+              Pick the assets you want Scoutkat to prioritize first.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {tokens.map((token) => {
@@ -44,8 +44,8 @@ export function OnboardingFlow({ tokens }: { tokens: Token[] }) {
                     onClick={() => toggleSymbol(token.symbol)}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                       selected
-                        ? "bg-primary text-white"
-                        : "border border-border/70 bg-white text-foreground/70 hover:bg-muted"
+                        ? "border border-white bg-white text-black"
+                        : "border border-white/16 bg-transparent text-white/70 hover:bg-white/[0.04]"
                     }`}
                   >
                     {token.symbol}
@@ -63,8 +63,8 @@ export function OnboardingFlow({ tokens }: { tokens: Token[] }) {
 
         {step === 2 ? (
           <>
-            <h2 className="mt-3 text-2xl font-black tracking-tight">Choose alert preference</h2>
-            <p className="mt-2 max-w-2xl text-sm text-foreground/65">
+            <h2 className="display mt-3 text-3xl text-white">Choose alert preference</h2>
+            <p className="mt-2 max-w-2xl text-sm text-white/60">
               Tell Scoutkat whether to emphasize early setups, risk alerts, or a balanced mix.
             </p>
             <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -75,12 +75,12 @@ export function OnboardingFlow({ tokens }: { tokens: Token[] }) {
                   onClick={() => setAlertPreference(preference)}
                   className={`rounded-[1.25rem] border p-4 text-left transition ${
                     alertPreference === preference
-                      ? "border-primary bg-primary/8"
-                      : "border-border/70 bg-white hover:bg-muted/60"
+                      ? "border-white bg-white/[0.06]"
+                      : "border-white/14 bg-transparent hover:bg-white/[0.03]"
                   }`}
                 >
-                  <p className="font-bold">{alertPreferenceLabels[preference]}</p>
-                  <p className="mt-2 text-sm text-foreground/62">
+                  <p className="font-bold text-white">{alertPreferenceLabels[preference]}</p>
+                  <p className="mt-2 text-sm text-white/58">
                     {preference === "early_setups"
                       ? "Favor early divergence before the crowd arrives."
                       : preference === "risk_alerts"
@@ -103,22 +103,22 @@ export function OnboardingFlow({ tokens }: { tokens: Token[] }) {
 
         {step === 3 ? (
           <>
-            <h2 className="mt-3 text-2xl font-black tracking-tight">Finish setup</h2>
-            <p className="mt-2 max-w-2xl text-sm text-foreground/65">
+            <h2 className="display mt-3 text-3xl text-white">Finish setup</h2>
+            <p className="mt-2 max-w-2xl text-sm text-white/60">
               Scoutkat will open with your tracked assets, signal priorities, and divergence context ready.
             </p>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[1.25rem] bg-muted/60 p-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/45">
+              <div className="border border-white/12 p-4">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/45">
                   Tracked assets
                 </p>
-                <p className="mt-3 text-lg font-bold">{trackedSymbols.join(", ")}</p>
+                <p className="mt-3 text-lg font-bold text-white">{trackedSymbols.join(", ")}</p>
               </div>
-              <div className="rounded-[1.25rem] bg-muted/60 p-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/45">
+              <div className="border border-white/12 p-4">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/45">
                   Alert preference
                 </p>
-                <p className="mt-3 text-lg font-bold">{alertPreferenceLabels[alertPreference]}</p>
+                <p className="mt-3 text-lg font-bold text-white">{alertPreferenceLabels[alertPreference]}</p>
               </div>
             </div>
             {trackedSymbols.map((symbol) => (
@@ -129,7 +129,7 @@ export function OnboardingFlow({ tokens }: { tokens: Token[] }) {
               <Button type="button" variant="ghost" onClick={() => setStep(2)}>
                 Back
               </Button>
-              <Button type="submit">Enter my watchlist</Button>
+              <Button type="submit">Enter workspace</Button>
             </div>
           </>
         ) : null}

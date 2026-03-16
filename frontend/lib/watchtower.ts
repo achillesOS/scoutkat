@@ -16,13 +16,13 @@ export function signalLabel(signalType: SignalType) {
 export function signalTone(signalType: SignalType) {
   switch (signalType) {
     case "hidden_accumulation":
-      return "bg-primary/12 text-primary ring-1 ring-primary/20";
+      return "border border-white/16 bg-white/[0.05] text-white";
     case "narrative_ignition":
-      return "bg-amber-500/14 text-amber-900 ring-1 ring-amber-600/20";
+      return "border border-amber-200/22 bg-amber-200/10 text-amber-100";
     case "retail_trap":
-      return "bg-rose-500/12 text-rose-800 ring-1 ring-rose-600/20";
+      return "border border-rose-200/18 bg-rose-200/10 text-rose-100";
     default:
-      return "bg-muted text-foreground/70 ring-1 ring-border/70";
+      return "border border-white/12 bg-transparent text-white/60";
   }
 }
 
