@@ -1,4 +1,3 @@
-import { signals as fallbackSignals, tokens as fallbackTokens } from "@/lib/mock-data";
 import type { Signal, Token } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -16,32 +15,19 @@ async function fetchJson<T>(path: string): Promise<T | null> {
 }
 
 export async function getTokens() {
-  return (await fetchJson<Token[]>("/tokens")) ?? fallbackTokens;
+  return (await fetchJson<Token[]>("/tokens")) ?? [];
 }
 
 export async function getToken(symbol: string) {
-  const fallback = fallbackTokens.find((token) => token.symbol === symbol);
-  return (
-    (await fetchJson<Token & { recent_signals?: Signal[] }>(`/tokens/${symbol}`)) ??
-    (fallback
-      ? {
-          ...fallback,
-          recent_signals: fallbackSignals.filter((signal) => signal.token_symbol === symbol),
-        }
-      : null)
-  );
+  return await fetchJson<Token & { recent_signals?: Signal[] }>(`/tokens/${symbol}`);
 }
 
 export async function getSignals() {
-  return (await fetchJson<Signal[]>("/signals")) ?? fallbackSignals;
+  return (await fetchJson<Signal[]>("/signals")) ?? [];
 }
 
 export async function getSignal(id: string) {
-  return (
-    (await fetchJson<Signal>(`/signals/${id}`)) ??
-    fallbackSignals.find((signal) => signal.id === id) ??
-    null
-  );
+  return await fetchJson<Signal>(`/signals/${id}`);
 }
 
 export async function getWatchlist() {
