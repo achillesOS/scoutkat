@@ -11,19 +11,18 @@ class WatchlistService:
         self.watchlist_repository = watchlist_repository
         self.token_repository = token_repository
 
-    def get_watchlist(self) -> list[dict]:
-        token_ids = self.watchlist_repository.list_token_ids()
+    def get_watchlist(self, user_email: str) -> list[dict]:
+        token_ids = self.watchlist_repository.list_token_ids(user_email)
         return [
             token
             for token_id in token_ids
             if (token := self.token_repository.get_by_id(token_id)) is not None
         ]
 
-    def add(self, token_id: str) -> list[dict]:
-        self.watchlist_repository.add(token_id)
-        return self.get_watchlist()
+    def add(self, token_id: str, user_email: str) -> list[dict]:
+        self.watchlist_repository.add(token_id, user_email)
+        return self.get_watchlist(user_email)
 
-    def remove(self, token_id: str) -> list[dict]:
-        self.watchlist_repository.remove(token_id)
-        return self.get_watchlist()
-
+    def remove(self, token_id: str, user_email: str) -> list[dict]:
+        self.watchlist_repository.remove(token_id, user_email)
+        return self.get_watchlist(user_email)
