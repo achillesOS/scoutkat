@@ -45,6 +45,7 @@ class TokenService:
         market = self.snapshot_repository.latest_market_snapshot(token["id"])
         positioning = self.snapshot_repository.latest_positioning_snapshot(token["id"])
         score = self.score_repository.latest_score_snapshot(token["id"])
+        attention = self.x_attention_repository.latest_snapshot(token["id"])
         if market is None or positioning is None or score is None:
             return None
 
@@ -71,6 +72,7 @@ class TokenService:
                 "risks": self._build_risks(latest_signal, positioning),
                 "invalidation": self._build_invalidation(latest_signal, score, market),
             },
+            "social_summary": self._build_social_summary(attention),
             "divergence_chart": {
                 "default_timeframe": "72h",
                 "series": {
@@ -279,6 +281,58 @@ class TokenService:
             f"1h return reverses from {float(market.get('return_1h', 0.0)) * 100:.1f}% into negative territory.",
         ]
 
+    def _build_social_summary(self, attention: dict[str, Any] | None) -> dict[str, Any]:
+        if attention is None:
+            return {
+                "snapshot_incomplete": True,
+                "attention_label": "Unavailable",
+                "discussion_type": "unclear",
+                "signal_hint": "unclear",
+                "confidence": 0.0,
+                "summary_points": ["No recent X summary is available for this asset yet."],
+                "top_narratives": [],
+                "expert_presence": 0.0,
+                "retail_breadth": 0.0,
+                "narrative_novelty": 0.0,
+            }
+
+        raw = attention.get("raw_grok_json") or {}
+        provider_payload = raw.get("provider_payload", {}) if isinstance(raw, dict) else {}
+        validated_payload = provider_payload.get("validated_payload") if isinstance(provider_payload, dict) else None
+        summary_points: list[str] = []
+        top_narratives: list[str] = []
+        discussion_type = "unclear"
+        signal_hint = "unclear"
+        attention_label = _attention_level_label(float(attention.get("mentions_1h", 0.0)))
+        confidence = 0.0
+
+        if isinstance(validated_payload, dict):
+            summary_points = [str(item) for item in validated_payload.get("new_information_summary", []) if str(item).strip()]
+            top_narratives = [str(item) for item in validated_payload.get("top_narratives", []) if str(item).strip()]
+            discussion_type = str(validated_payload.get("discussion_type", "unclear"))
+            signal_hint = str(validated_payload.get("signal_hint", {}).get("likely_pattern", "unclear"))
+            attention_label = str(validated_payload.get("attention_level", attention_label)).replace("_", " ").title()
+            confidence = float(validated_payload.get("confidence", 0.0))
+
+        if not summary_points:
+            summary_points = [
+                f"Estimated {int(float(attention.get('mentions_1h', 0.0)))} mentions over the last hour.",
+                f"Retail breadth {float(attention.get('retail_breadth', 0.0)):.2f} and expert presence {float(attention.get('expert_presence', 0.0)):.2f}.",
+            ]
+
+        return {
+            "snapshot_incomplete": bool(provider_payload.get("snapshot_incomplete", False)),
+            "attention_label": attention_label,
+            "discussion_type": discussion_type,
+            "signal_hint": signal_hint,
+            "confidence": confidence,
+            "summary_points": summary_points[:4],
+            "top_narratives": top_narratives[:4],
+            "expert_presence": float(attention.get("expert_presence", 0.0)),
+            "retail_breadth": float(attention.get("retail_breadth", 0.0)),
+            "narrative_novelty": float(attention.get("narrative_novelty", 0.0)),
+        }
+
     def _market_change_24h(self, market: dict[str, Any]) -> float:
         raw = market.get("raw_hl_json") or {}
         asset_ctx = raw.get("asset_ctx", {}) if isinstance(raw, dict) else {}
@@ -287,3 +341,13 @@ class TokenService:
         if prev_day_price <= 0:
             return 0.0
         return ((mark_price - prev_day_price) / prev_day_price) * 100
+
+
+def _attention_level_label(mentions_1h: float) -> str:
+    if mentions_1h >= 250:
+        return "Extreme"
+    if mentions_1h >= 120:
+        return "High"
+    if mentions_1h >= 40:
+        return "Medium"
+    return "Low"

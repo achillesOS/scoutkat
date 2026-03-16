@@ -36,3 +36,18 @@ class XAttentionRepository:
             .execute()
         )
         return list(response.data or [])
+
+    def snapshots_since(self, token_id: str, since_iso: str, limit: int = 240) -> list[dict]:
+        client = get_supabase_client()
+        if client is None:
+            return []
+        response = (
+            client.table("x_attention_snapshots")
+            .select("*")
+            .eq("token_id", token_id)
+            .gte("timestamp", since_iso)
+            .order("timestamp", desc=False)
+            .limit(limit)
+            .execute()
+        )
+        return list(response.data or [])

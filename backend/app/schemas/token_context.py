@@ -26,6 +26,19 @@ class CurrentSignalStateResponse(AppBaseModel):
     invalidation: list[str]
 
 
+class SocialSummaryResponse(AppBaseModel):
+    snapshot_incomplete: bool
+    attention_label: str
+    discussion_type: str
+    signal_hint: str
+    confidence: float
+    summary_points: list[str]
+    top_narratives: list[str]
+    expert_presence: float
+    retail_breadth: float
+    narrative_novelty: float
+
+
 class DivergencePointResponse(AppBaseModel):
     timestamp: datetime
     attention_score: float
@@ -48,6 +61,7 @@ class RecentStateChangeResponse(AppBaseModel):
 class TokenContextResponse(AppBaseModel):
     header: TokenHeaderResponse
     current_signal_state: CurrentSignalStateResponse
+    social_summary: SocialSummaryResponse
     divergence_chart: DivergenceChartResponse
     recent_state_changes: list[RecentStateChangeResponse]
     recent_signal_history: list[SignalResponse]

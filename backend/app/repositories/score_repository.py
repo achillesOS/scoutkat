@@ -39,6 +39,19 @@ class ScoreRepository:
         )
         return list(response.data or [])
 
+    def list_recent_scores(self, limit: int = 300) -> list[dict]:
+        client = get_supabase_client()
+        if client is None:
+            return []
+        response = (
+            client.table("score_snapshots")
+            .select("*")
+            .order("timestamp", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return list(response.data or [])
+
 
 def cooldown_cutoff_iso(minutes: int) -> str:
     return (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()

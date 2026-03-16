@@ -44,6 +44,21 @@ class SnapshotRepository:
         )
         return list(response.data or [])
 
+    def market_snapshots_since(self, token_id: str, since_iso: str, limit: int = 240) -> list[dict]:
+        client = get_supabase_client()
+        if client is None:
+            return []
+        response = (
+            client.table("hl_market_snapshots")
+            .select("*")
+            .eq("token_id", token_id)
+            .gte("timestamp", since_iso)
+            .order("timestamp", desc=False)
+            .limit(limit)
+            .execute()
+        )
+        return list(response.data or [])
+
     def recent_positioning_snapshots(self, token_id: str, limit: int = 24) -> list[dict]:
         client = get_supabase_client()
         if client is None:
@@ -53,6 +68,21 @@ class SnapshotRepository:
             .select("*")
             .eq("token_id", token_id)
             .order("timestamp", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return list(response.data or [])
+
+    def positioning_snapshots_since(self, token_id: str, since_iso: str, limit: int = 240) -> list[dict]:
+        client = get_supabase_client()
+        if client is None:
+            return []
+        response = (
+            client.table("hl_positioning_snapshots")
+            .select("*")
+            .eq("token_id", token_id)
+            .gte("timestamp", since_iso)
+            .order("timestamp", desc=False)
             .limit(limit)
             .execute()
         )

@@ -2,23 +2,24 @@ import Link from "next/link";
 import type { Route } from "next";
 import type { ReactNode } from "react";
 
-const nav = [
-  { href: "/watchlist", label: "Watchtower" },
-  { href: "/signals", label: "Signals" },
-  { href: "/my-edge", label: "My Edge" },
-] as const satisfies ReadonlyArray<{ href: Route; label: string }>;
+import { getViewerState } from "@/lib/auth";
 
-export function Shell({
+export async function Shell({
   title,
   eyebrow,
   description,
+  actions,
   children,
 }: {
   title: string;
   eyebrow: string;
   description?: string;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
+  const viewer = await getViewerState();
+  const nav = viewer.isAuthenticated && viewer.onboarding ? privateNav : publicNav;
+
   return (
     <main className="grain min-h-screen px-6 py-8 md:px-10">
       <div className="mx-auto max-w-6xl">
@@ -30,23 +31,41 @@ export function Shell({
             <h1 className="text-4xl font-black tracking-tight">{title}</h1>
             <p className="mt-3 max-w-2xl text-sm text-foreground/72">
               {description ??
-                "Scoutkat scans divergence between X attention, Hyperliquid structure, and perp positioning."}
+                "Scoutkat compares X attention against Hyperliquid structure and perp positioning."}
             </p>
           </div>
-          <nav className="flex flex-wrap gap-2">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full border border-border/70 px-4 py-2 text-sm font-medium text-foreground/80 transition hover:bg-white"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="flex flex-col items-start gap-3 md:items-end">
+            <nav className="flex flex-wrap gap-2">
+              {nav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-full border border-border/70 px-4 py-2 text-sm font-medium text-foreground/80 transition hover:bg-white"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+          </div>
         </header>
         {children}
       </div>
     </main>
   );
 }
+
+const publicNav = [
+  { href: "/", label: "Home" },
+  { href: "/signals", label: "Signals" },
+  { href: "/watchlist", label: "Watchlist" },
+  { href: "/my-edge", label: "My Edge" },
+  { href: "/sign-in", label: "Sign in" },
+] as const satisfies ReadonlyArray<{ href: Route; label: string }>;
+
+const privateNav = [
+  { href: "/watchlist", label: "Watchlist" },
+  { href: "/signals", label: "Signals" },
+  { href: "/my-edge", label: "My Edge" },
+  { href: "/account", label: "Account" },
+] as const satisfies ReadonlyArray<{ href: Route; label: string }>;
