@@ -146,4 +146,4 @@ services:
       - key: TRACKED_SYMBOLS
         value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
       - key: HOURLY_DIGEST_SYMBOLS
-        value: BTC,ETH,SOL,HYPE
+        value: BTC,ETH,SOL,HYPE,BNB

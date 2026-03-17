@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     enable_scheduler: bool = Field(default=True)
     default_user_email: str = "demo@scoutkat.local"
     tracked_symbols: str = "BTC,ETH,SOL,HYPE,XRP,DOGE,BNB,SUI,ADA,AVAX,LINK"
-    hourly_digest_symbols: str = "BTC,ETH,SOL,HYPE"
+    hourly_digest_symbols: str = "BTC,ETH,SOL,HYPE,BNB"
 
     @property
     def scoring_weights_path(self) -> Path:
