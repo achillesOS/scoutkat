@@ -4,6 +4,11 @@ from app.repositories.supabase_client import get_supabase_client
 
 
 class UserRepository:
+    def get_or_create_default_user(self) -> dict | None:
+        from app.core.config import get_settings
+
+        return self.get_or_create_user(get_settings().default_user_email)
+
     def get_or_create_user_id(self, email: str) -> str | None:
         record = self.get_or_create_user(email)
         return record["id"] if record else None

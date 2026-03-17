@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
@@ -12,19 +13,34 @@ class HyperliquidHttpProvider(HyperliquidProvider):
         self.settings = get_settings()
 
     async def _fetch_asset_context(self, symbol: str) -> tuple[dict[str, Any], dict[str, Any]]:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                self.settings.hyperliquid_api_url + "/info",
-                json={"type": "metaAndAssetCtxs"},
-            )
-            response.raise_for_status()
-            payload = response.json()
+        payload = await self._post_info({"type": "metaAndAssetCtxs"})
 
         meta, asset_contexts = payload
         for asset_meta, asset_ctx in zip(meta.get("universe", []), asset_contexts, strict=False):
             if asset_meta.get("name") == symbol.upper():
                 return asset_meta, asset_ctx
         raise ValueError(f"Hyperliquid asset context not found for {symbol}")
+
+    async def _post_info(self, payload: dict[str, Any]) -> Any:
+        last_error: Exception | None = None
+        delay = 1.0
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    response = await client.post(
+                        self.settings.hyperliquid_api_url + "/info",
+                        json=payload,
+                    )
+                    response.raise_for_status()
+                    return response.json()
+            except Exception as exc:
+                last_error = exc
+                if attempt == 2:
+                    break
+                await asyncio.sleep(delay)
+                delay *= 2
+        assert last_error is not None
+        raise last_error
 
     async def fetch_market_snapshot(self, symbol: str) -> dict[str, Any]:
         asset_meta, asset_ctx = await self._fetch_asset_context(symbol)

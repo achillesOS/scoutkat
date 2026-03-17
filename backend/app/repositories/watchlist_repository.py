@@ -6,11 +6,14 @@ class WatchlistRepository:
     def __init__(self) -> None:
         self.user_repository = UserRepository()
 
-    def list_token_ids(self, user_email: str) -> list[str]:
+    def list_token_ids(self, user_email: str | None = None) -> list[str]:
+        from app.core.config import get_settings
+
         client = get_supabase_client()
         if client is None:
             return []
-        resolved_user_id = self.user_repository.get_or_create_user_id(user_email)
+        resolved_email = user_email or get_settings().default_user_email
+        resolved_user_id = self.user_repository.get_or_create_user_id(resolved_email)
         if not resolved_user_id:
             return []
         response = (

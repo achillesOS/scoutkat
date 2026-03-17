@@ -6,6 +6,7 @@ from app.jobs.tasks import (
     fetch_grok_shortlist_job,
     fetch_market_snapshots_job,
     fetch_positioning_snapshots_job,
+    send_hourly_digest_job,
 )
 
 
@@ -21,6 +22,7 @@ class SchedulerManager:
             self.scheduler.add_job(fetch_grok_shortlist_job, "interval", minutes=10)
             self.scheduler.add_job(compute_scores_job, "interval", minutes=10)
             self.scheduler.add_job(detect_signals_job, "interval", minutes=10)
+            self.scheduler.add_job(send_hourly_digest_job, "interval", hours=1)
             self._configured = True
         if not self.scheduler.running:
             self.scheduler.start()
@@ -31,4 +33,3 @@ class SchedulerManager:
 
 
 scheduler_manager = SchedulerManager()
-

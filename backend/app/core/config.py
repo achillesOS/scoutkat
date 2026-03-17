@@ -29,7 +29,8 @@ class Settings(BaseSettings):
     alert_cooldown_minutes: int = 90
     enable_scheduler: bool = Field(default=True)
     default_user_email: str = "demo@scoutkat.local"
-    tracked_symbols: str = "BTC,ETH,SOL,XRP,DOGE,BNB,SUI,ADA,AVAX,LINK"
+    tracked_symbols: str = "BTC,ETH,SOL,HYPE,XRP,DOGE,BNB,SUI,ADA,AVAX,LINK"
+    hourly_digest_symbols: str = "BTC,ETH,SOL,HYPE"
 
     @property
     def scoring_weights_path(self) -> Path:
@@ -60,6 +61,10 @@ class Settings(BaseSettings):
     @property
     def tracked_symbol_list(self) -> list[str]:
         return [symbol.strip().upper() for symbol in self.tracked_symbols.split(",") if symbol.strip()]
+
+    @property
+    def hourly_digest_symbol_list(self) -> list[str]:
+        return [symbol.strip().upper() for symbol in self.hourly_digest_symbols.split(",") if symbol.strip()]
 
 
 @lru_cache

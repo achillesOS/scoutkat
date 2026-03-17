@@ -13,6 +13,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.watchlist_repository import WatchlistRepository
 from app.repositories.x_attention_repository import XAttentionRepository
 from app.services.cache_service import CacheService, NullCacheService, RedisCacheService
+from app.services.hourly_digest_service import HourlyDigestService
 from app.services.market_ingestion_service import MarketIngestionService
 from app.services.notification_service import NotificationService
 from app.services.scoring_pipeline_service import ScoringPipelineService
@@ -144,6 +145,18 @@ def get_scoring_pipeline_service() -> ScoringPipelineService:
         signal_repository=get_signal_repository(),
         grok_provider=get_grok_provider(),
         cache_service=get_cache_service(),
+        notification_service=get_notification_service(),
+    )
+
+
+@lru_cache
+def get_hourly_digest_service() -> HourlyDigestService:
+    return HourlyDigestService(
+        token_repository=get_token_repository(),
+        snapshot_repository=get_snapshot_repository(),
+        score_repository=get_score_repository(),
+        market_ingestion_service=get_market_ingestion_service(),
+        scoring_pipeline_service=get_scoring_pipeline_service(),
         notification_service=get_notification_service(),
     )
 

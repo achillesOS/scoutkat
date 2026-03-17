@@ -96,3 +96,54 @@ services:
         value: demo@scoutkat.local
       - key: TRACKED_SYMBOLS
         value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
+
+  - type: cron
+    name: scoutkat-hourly-digest-sg
+    runtime: python
+    region: singapore
+    rootDir: backend
+    schedule: "0 * * * *"
+    buildCommand: pip install .
+    startCommand: python -m app.jobs.run_hourly_digest
+    plan: starter
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ENABLE_SCHEDULER
+        value: "false"
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: HYPERLIQUID_API_URL
+        value: https://api.hyperliquid.xyz
+      - key: GROK_API_URL
+        value: https://api.x.ai/v1/chat/completions
+      - key: GROK_API_KEY
+        sync: false
+      - key: GROK_MODEL
+        value: grok-4-1-fast-non-reasoning
+      - key: GROK_TIMEOUT_SECONDS
+        value: "20"
+      - key: GROK_MAX_RETRIES
+        value: "3"
+      - key: GROK_CACHE_BUCKET_MINUTES
+        value: "30"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_DEFAULT_CHAT_ID
+        sync: false
+      - key: SOCIAL_REFRESH_MINUTES
+        value: "30"
+      - key: ALERT_COOLDOWN_MINUTES
+        value: "90"
+      - key: DEFAULT_USER_EMAIL
+        value: demo@scoutkat.local
+      - key: TRACKED_SYMBOLS
+        value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
+      - key: HOURLY_DIGEST_SYMBOLS
+        value: BTC,ETH,SOL,HYPE

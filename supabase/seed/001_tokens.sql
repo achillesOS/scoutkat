@@ -3,6 +3,7 @@ values
   ('BTC', 'Bitcoin', 'perp', true),
   ('ETH', 'Ethereum', 'perp', true),
   ('SOL', 'Solana', 'perp', true),
+  ('HYPE', 'Hyperliquid', 'perp', true),
   ('XRP', 'XRP', 'perp', true),
   ('DOGE', 'Dogecoin', 'perp', true),
   ('BNB', 'BNB', 'perp', true),
@@ -11,4 +12,3 @@ values
   ('AVAX', 'Avalanche', 'perp', true),
   ('LINK', 'Chainlink', 'perp', true)
 on conflict (symbol) do nothing;
-

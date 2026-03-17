@@ -4,6 +4,7 @@ Scoutkat deploys the backend to Render with two services defined in [render.yaml
 
 - `scoutkat-backend`: FastAPI API
 - `scoutkat-cycle`: Render Cron job that runs ingestion + scoring every 10 minutes
+- `scoutkat-hourly-digest`: Render Cron job that sends the Telegram divergence digest every hour
 
 ## Why this layout
 
@@ -29,5 +30,6 @@ Scoutkat deploys the backend to Render with two services defined in [render.yaml
 
 - The backend web service exposes `/health` for Render health checks.
 - The cron job uses `python -m app.jobs.run_cycle`.
+- The hourly Telegram digest cron uses `python -m app.jobs.run_hourly_digest`.
 - Production sets `ENABLE_SCHEDULER=false` because Render Cron is the scheduler.
 - Render Cron schedules use cron expressions. See [Cron jobs](https://render.com/docs/cronjobs).
