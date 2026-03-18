@@ -37,8 +37,17 @@ class TradeExecutorService:
 
     async def run(self) -> dict:
         latest_run = self.hourly_digest_repository.latest_run_within_window(self.settings.trade_execution_grace_minutes)
+        account_summary = await self.trade_provider.get_account_summary()
         if latest_run is None:
-            return {"status": "skipped", "reason": "missing_recent_digest"}
+            return {
+                "status": "skipped",
+                "reason": "missing_recent_digest",
+                "results": [
+                    {"symbol": symbol, "action": "skip", "reason": "missing_recent_digest"}
+                    for symbol in self.settings.trade_executor_symbol_list
+                ],
+                "account_summary": account_summary,
+            }
 
         run_rows = self.hourly_digest_repository.rows_for_run(latest_run["id"])
         rows_by_symbol = {row["symbol"]: row for row in run_rows}
@@ -70,7 +79,6 @@ class TradeExecutorService:
                 results.append({"symbol": symbol, "action": "reverse", "close": close_result, "open": open_result})
                 continue
             results.append(await self._open_position(decision))
-        account_summary = await self.trade_provider.get_account_summary()
         return {"status": "completed", "run_id": latest_run["id"], "results": results, "account_summary": account_summary}
 
     def _decide(

@@ -203,7 +203,7 @@ services:
       - key: TRADE_EXECUTOR_SYMBOLS
         value: BTC,SOL
       - key: TRADE_SIGNAL_CONFIRMATIONS
-        value: "2"
+        value: "1"
       - key: TRADE_EXECUTION_GRACE_MINUTES
         value: "10"
       - key: TRADE_HOLD_HOURS

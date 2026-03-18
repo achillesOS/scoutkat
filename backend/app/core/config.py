@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     hourly_digest_symbols: str = "BTC,ETH,SOL,HYPE,BNB"
     trade_enabled: bool = False
     trade_executor_symbols: str = "BTC,SOL"
-    trade_signal_confirmations: int = 2
+    trade_signal_confirmations: int = 1
     trade_execution_grace_minutes: int = 10
     trade_hold_hours: int = 6
     trade_default_notional_usd: float = 10.0

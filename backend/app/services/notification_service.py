@@ -113,11 +113,17 @@ class NotificationService:
 
     def _format_trade_executor_report(self, executor_result: dict) -> str:
         now_local = datetime.now(ZoneInfo("Asia/Shanghai"))
+        status = str(executor_result.get("status", "unknown"))
+        reason = executor_result.get("reason")
         lines = [
             "Scoutkat 仓位与执行同步",
             f"播报时间: {now_local.strftime('%Y-%m-%d %H:%M:%S CST')}",
+            f"执行状态: {status}",
             "",
         ]
+        if reason:
+            lines.append(f"本轮说明: {reason}")
+            lines.append("")
         for item in executor_result.get("results", []):
             symbol = item.get("symbol", "")
             action = item.get("action", "skip")
