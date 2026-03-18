@@ -12,6 +12,8 @@ from app.providers.base import TradeExecutionProvider
 
 
 class HyperliquidTradeProvider(TradeExecutionProvider):
+    MIN_ORDER_VALUE_USD = 10.0
+
     def __init__(self) -> None:
         self.settings = get_settings()
         self.info = Info(self.settings.hyperliquid_api_url, skip_ws=True)
@@ -55,12 +57,37 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             return {"status": "failed", "reason": "missing_mid_price", "symbol": symbol.upper()}
 
         size = self._size_for_notional(symbol.upper(), notional_usd, price)
+        order_value_usd = size * price
+        if size <= 0 or order_value_usd < self.MIN_ORDER_VALUE_USD:
+            return {
+                "status": "failed",
+                "reason": "order_below_exchange_minimum",
+                "symbol": symbol.upper(),
+                "size": size,
+                "entry_price_reference": price,
+                "order_value_usd": round(order_value_usd, 4),
+                "minimum_order_value_usd": self.MIN_ORDER_VALUE_USD,
+            }
+
         leverage_response = self.exchange.update_leverage(
             int(leverage),
             symbol.upper(),
             is_cross=(margin_mode == "cross"),
         )
         order_response = self.exchange.market_open(symbol.upper(), is_buy=is_buy, sz=size)
+        order_error = _extract_order_error(order_response)
+        if order_response.get("status") != "ok" or order_error:
+            return {
+                "status": "failed",
+                "symbol": symbol.upper(),
+                "side": side,
+                "size": size,
+                "entry_price_reference": price,
+                "leverage_response": leverage_response,
+                "order_response": order_response,
+                "reason": order_error or "order_rejected",
+            }
+
         stop_response = self._place_stop_loss(
             symbol=symbol.upper(),
             side=side,
@@ -68,16 +95,19 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             entry_price=price,
             stop_loss_pct=stop_loss_pct,
         )
-        status = "opened" if order_response.get("status") == "ok" else "failed"
+        stop_error = _extract_order_error(stop_response.get("response", {}))
+        status = "opened_stop_failed" if stop_error else "opened"
         return {
             "status": status,
             "symbol": symbol.upper(),
             "side": side,
             "size": size,
             "entry_price_reference": price,
+            "order_value_usd": round(order_value_usd, 4),
             "leverage_response": leverage_response,
             "order_response": order_response,
             "stop_response": stop_response,
+            "reason": stop_error,
         }
 
     async def close_position(self, *, symbol: str, side: str) -> dict[str, Any]:
@@ -85,9 +115,10 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             return self._skipped("close_position", symbol)
         response = self.exchange.market_close(symbol.upper())
         return {
-            "status": "closed" if response.get("status") == "ok" else "failed",
+            "status": "closed" if response.get("status") == "ok" and not _extract_order_error(response) else "failed",
             "symbol": symbol.upper(),
             "side": side,
+            "reason": _extract_order_error(response),
             "response": response,
         }
 
@@ -137,17 +168,19 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             return self._skipped("place_stop_loss", symbol)
         trigger_price = entry_price * (1 - stop_loss_pct) if side == "long" else entry_price * (1 + stop_loss_pct)
         is_buy = side == "short"
+        limit_price = trigger_price * (1.1 if is_buy else 0.9)
         response = self.exchange.order(
             symbol,
             is_buy=is_buy,
             sz=size,
-            limit_px=trigger_price,
+            limit_px=limit_price,
             order_type={"trigger": {"triggerPx": trigger_price, "isMarket": True, "tpsl": "sl"}},
             reduce_only=True,
         )
         return {
-            "status": "submitted" if response.get("status") == "ok" else "failed",
+            "status": "submitted" if response.get("status") == "ok" and not _extract_order_error(response) else "failed",
             "trigger_price": trigger_price,
+            "limit_price": limit_price,
             "response": response,
         }
 
@@ -174,3 +207,15 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             "action": action,
             "symbol": symbol.upper(),
         }
+
+
+def _extract_order_error(response: dict[str, Any] | None) -> str | None:
+    if not response:
+        return None
+    payload = response.get("response", {})
+    data = payload.get("data", {})
+    statuses = data.get("statuses", [])
+    for status in statuses:
+        if isinstance(status, dict) and status.get("error"):
+            return str(status["error"])
+    return None
