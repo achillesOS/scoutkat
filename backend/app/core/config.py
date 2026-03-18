@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     trade_enabled: bool = False
     trade_executor_symbols: str = "BTC,SOL"
     trade_signal_confirmations: int = 1
-    trade_execution_grace_minutes: int = 10
+    trade_execution_grace_minutes: int = 59
     trade_hold_hours: int = 6
     trade_default_notional_usd: float = 10.0
     trade_notional_usd_map: str = "BTC:10,SOL:10"

@@ -205,7 +205,7 @@ services:
       - key: TRADE_SIGNAL_CONFIRMATIONS
         value: "1"
       - key: TRADE_EXECUTION_GRACE_MINUTES
-        value: "10"
+        value: "59"
       - key: TRADE_HOLD_HOURS
         value: "6"
       - key: TRADE_DEFAULT_NOTIONAL_USD
