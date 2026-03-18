@@ -166,9 +166,11 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
     def _place_stop_loss(self, *, symbol: str, side: str, size: float, entry_price: float, stop_loss_pct: float) -> dict[str, Any]:
         if not self.exchange:
             return self._skipped("place_stop_loss", symbol)
-        trigger_price = entry_price * (1 - stop_loss_pct) if side == "long" else entry_price * (1 + stop_loss_pct)
+        raw_trigger_price = entry_price * (1 - stop_loss_pct) if side == "long" else entry_price * (1 + stop_loss_pct)
         is_buy = side == "short"
-        limit_price = trigger_price * (1.1 if is_buy else 0.9)
+        trigger_price = self._normalize_price(symbol, raw_trigger_price)
+        raw_limit_price = trigger_price * (1.03 if is_buy else 0.97)
+        limit_price = self._normalize_price(symbol, raw_limit_price)
         response = self.exchange.order(
             symbol,
             is_buy=is_buy,
@@ -183,6 +185,12 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             "limit_price": limit_price,
             "response": response,
         }
+
+    def _normalize_price(self, symbol: str, price: float) -> float:
+        asset = self.exchange.info.coin_to_asset[symbol.upper()]
+        is_spot = asset >= 10_000
+        decimals = (8 if is_spot else 6) - self.exchange.info.asset_to_sz_decimals[asset]
+        return round(float(f"{price:.5g}"), decimals)
 
     def _size_for_notional(self, symbol: str, notional_usd: float, price: float) -> float:
         decimals = self._sz_decimals(symbol)
