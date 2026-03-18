@@ -42,29 +42,48 @@ class TradeExecutorService:
 
         run_rows = self.hourly_digest_repository.rows_for_run(latest_run["id"])
         rows_by_symbol = {row["symbol"]: row for row in run_rows}
+        live_position_list = await self.trade_provider.get_open_positions(self.settings.trade_executor_symbol_list)
+        live_positions = {position["symbol"]: position for position in live_position_list}
         results: list[dict] = []
 
         for symbol in self.settings.trade_executor_symbol_list:
             latest_row = rows_by_symbol.get(symbol)
-            decision = self._decide(symbol, latest_row)
+            decision = self._decide(symbol, latest_row, live_positions.get(symbol), len(live_position_list))
             if decision.action == "skip":
                 results.append({"symbol": symbol, "action": "skip", "reason": decision.reason})
                 continue
             if decision.action == "close":
                 results.append(await self._close_position(symbol, decision.reason or "expired"))
                 continue
+            if decision.action == "reverse":
+                close_result = await self._close_position(symbol, decision.reason or "reverse_signal")
+                open_result = await self._open_position(
+                    TradeDecision(
+                        symbol=symbol,
+                        action="open",
+                        side=decision.side,
+                        signal_type=decision.signal_type,
+                        reason=decision.reason,
+                        digest_row=decision.digest_row,
+                    )
+                )
+                results.append({"symbol": symbol, "action": "reverse", "close": close_result, "open": open_result})
+                continue
             results.append(await self._open_position(decision))
+        account_summary = await self.trade_provider.get_account_summary()
+        return {"status": "completed", "run_id": latest_run["id"], "results": results, "account_summary": account_summary}
 
-        return {"status": "completed", "run_id": latest_run["id"], "results": results}
-
-    def _decide(self, symbol: str, latest_row: dict | None) -> TradeDecision:
-        open_position = self.trade_repository.latest_open_position_for_symbol(symbol)
-        if open_position is not None and self._position_expired(open_position):
-            side = str(open_position["side"])
+    def _decide(
+        self,
+        symbol: str,
+        latest_row: dict | None,
+        live_position: dict | None,
+        open_position_count: int,
+    ) -> TradeDecision:
+        if live_position is not None and self._position_expired(live_position):
+            side = str(live_position["side"])
             return TradeDecision(symbol=symbol, action="close", side=side, reason="hold_window_expired")
-        if open_position is not None:
-            return TradeDecision(symbol=symbol, action="skip", reason="existing_open_position")
-        if len(self.trade_repository.list_open_positions()) >= self.settings.trade_max_open_positions:
+        if live_position is None and open_position_count >= self.settings.trade_max_open_positions:
             return TradeDecision(symbol=symbol, action="skip", reason="max_open_positions_reached")
         if latest_row is None:
             return TradeDecision(symbol=symbol, action="skip", reason="missing_digest_row")
@@ -84,6 +103,18 @@ class TradeExecutorService:
         side = _signal_to_side(str(confirmed_row["signal_type"]))
         if side is None:
             return TradeDecision(symbol=symbol, action="skip", reason="non_trade_signal")
+        if live_position is not None:
+            existing_side = str(live_position["side"])
+            if existing_side == side:
+                return TradeDecision(symbol=symbol, action="skip", reason="existing_same_direction_position")
+            return TradeDecision(
+                symbol=symbol,
+                action="reverse",
+                side=side,
+                signal_type=str(confirmed_row["signal_type"]),
+                reason="reverse_on_confirmed_signal",
+                digest_row=confirmed_row,
+            )
         return TradeDecision(
             symbol=symbol,
             action="open",
@@ -222,7 +253,10 @@ class TradeExecutorService:
         return None
 
     def _position_expired(self, position: dict) -> bool:
-        opened_at = datetime.fromisoformat(str(position["opened_at"]).replace("Z", "+00:00")).astimezone(timezone.utc)
+        opened_at_raw = position.get("opened_at") or position.get("updated_at")
+        if not opened_at_raw:
+            return False
+        opened_at = datetime.fromisoformat(str(opened_at_raw).replace("Z", "+00:00")).astimezone(timezone.utc)
         expires_at = opened_at + timedelta(hours=self.settings.trade_hold_hours)
         return datetime.now(timezone.utc) >= expires_at
 

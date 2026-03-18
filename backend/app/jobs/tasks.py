@@ -4,6 +4,7 @@ from app.core.config import get_settings
 from app.core.container import (
     get_hourly_digest_service,
     get_market_ingestion_service,
+    get_notification_service,
     get_scoring_pipeline_service,
     get_trade_executor_service,
 )
@@ -56,6 +57,7 @@ def run_trade_executor_job() -> None:
         return
     try:
         result = asyncio.run(get_trade_executor_service().run())
+        asyncio.run(get_notification_service().send_trade_executor_report(result))
         print(
             "run_trade_executor_job: "
             f"{result.get('status', 'unknown')} for {','.join(settings.trade_executor_symbol_list)}"

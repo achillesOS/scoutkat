@@ -45,3 +45,11 @@ class TradeExecutionProvider(ABC):
     @abstractmethod
     async def close_position(self, *, symbol: str, side: str) -> dict[str, Any]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def get_open_positions(self, symbols: list[str] | None = None) -> list[dict[str, Any]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_account_summary(self) -> dict[str, Any]:
+        raise NotImplementedError

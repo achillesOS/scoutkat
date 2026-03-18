@@ -58,6 +58,17 @@ class NotificationService:
         message = self._format_hourly_digest_message(digest_rows)
         return await self.telegram_provider.send_signal_alert(chat_id, message)
 
+    async def send_trade_executor_report(self, executor_result: dict) -> dict | None:
+        default_user = self.user_repository.get_or_create_default_user()
+        chat_id = self.settings.telegram_default_chat_id
+        if default_user:
+            chat_id = default_user.get("telegram_chat_id") or chat_id
+        if not chat_id:
+            return {"status": "skipped_missing_chat_id"}
+
+        message = self._format_trade_executor_report(executor_result)
+        return await self.telegram_provider.send_signal_alert(chat_id, message)
+
     def _format_message(self, token_symbol: str, signal_event: dict, explanation: dict) -> str:
         return "\n".join(
             [
@@ -100,6 +111,53 @@ class NotificationService:
             lines.append("")
         return "\n".join(lines)
 
+    def _format_trade_executor_report(self, executor_result: dict) -> str:
+        now_local = datetime.now(ZoneInfo("Asia/Shanghai"))
+        lines = [
+            "Scoutkat 仓位与执行同步",
+            f"播报时间: {now_local.strftime('%Y-%m-%d %H:%M:%S CST')}",
+            "",
+        ]
+        for item in executor_result.get("results", []):
+            symbol = item.get("symbol", "")
+            action = item.get("action", "skip")
+            if action == "reverse":
+                lines.append(f"【{symbol}】执行: reverse")
+                lines.append(f"平仓: {item.get('close', {}).get('provider_status', 'unknown')}")
+                lines.append(f"开仓: {item.get('open', {}).get('provider_status', 'unknown')}")
+            else:
+                lines.append(f"【{symbol}】执行: {action}")
+                if item.get("reason"):
+                    lines.append(f"原因: {item['reason']}")
+                if item.get("provider_status"):
+                    lines.append(f"状态: {item['provider_status']}")
+                if item.get("leverage"):
+                    lines.append(f"杠杆: {item['leverage']}x")
+                if item.get("notional_usd"):
+                    lines.append(f"仓位: {item['notional_usd']} USDC")
+            lines.append("")
+
+        account_summary = executor_result.get("account_summary", {})
+        positions = account_summary.get("positions", [])
+        lines.append("账户概览")
+        lines.append(f"权益: ${_format_price(float(account_summary.get('account_value', 0.0)))}")
+        lines.append(f"可提: ${_format_price(float(account_summary.get('withdrawable', 0.0)))}")
+        if not positions:
+            lines.append("当前持仓: 空仓")
+            return "\n".join(lines)
+
+        total_pnl = 0.0
+        for position in positions:
+            total_pnl += float(position.get("unrealized_pnl", 0.0) or 0.0)
+            lines.append("")
+            lines.append(f"【{position['symbol']}】{position['side']} {position.get('leverage', 0)}x {position.get('margin_mode', '')}")
+            lines.append(f"持仓价值: ${_format_price(float(position.get('position_value', 0.0)))}")
+            lines.append(f"未实现盈亏: ${_format_signed(float(position.get('unrealized_pnl', 0.0)))}")
+            lines.append(f"ROE: {round(float(position.get('roe', 0.0)) * 100, 2)}%")
+        lines.append("")
+        lines.append(f"总未实现盈亏: ${_format_signed(total_pnl)}")
+        return "\n".join(lines)
+
 
 def _humanize_signal_type(value: str) -> str:
     mapping = {
@@ -137,3 +195,9 @@ def _format_market_timestamp(value: str) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     localized = parsed.astimezone(ZoneInfo("Asia/Shanghai"))
     return localized.strftime("%Y-%m-%d %H:%M:%S CST")
+
+
+def _format_signed(value: float) -> str:
+    if value >= 0:
+        return f"+{_format_price(value)}"
+    return f"-{_format_price(abs(value))}"
