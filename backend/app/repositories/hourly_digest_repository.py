@@ -58,17 +58,20 @@ class HourlyDigestRepository:
             .select("*")
             .lte("scheduled_for", cutoff)
             .order("scheduled_for", desc=True)
-            .limit(1)
+            .order("generated_at", desc=True)
+            .limit(10)
             .execute()
         )
         if not response.data:
             return None
-        run = response.data[0]
-        scheduled_for = _parse_datetime(run["scheduled_for"])
-        age_minutes = (datetime.now(timezone.utc) - scheduled_for).total_seconds() / 60
-        if age_minutes > grace_minutes:
-            return None
-        return run
+        for run in response.data:
+            scheduled_for = _parse_datetime(run["scheduled_for"])
+            age_minutes = (datetime.now(timezone.utc) - scheduled_for).total_seconds() / 60
+            if age_minutes > grace_minutes:
+                continue
+            if self.rows_for_run(str(run["id"])):
+                return run
+        return None
 
     def rows_for_run(self, run_id: str) -> list[dict]:
         client = get_supabase_client()
