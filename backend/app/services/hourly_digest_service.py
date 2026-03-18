@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
+from app.repositories.hourly_digest_repository import HourlyDigestRepository
 from app.repositories.score_repository import ScoreRepository
 from app.repositories.snapshot_repository import SnapshotRepository
 from app.repositories.token_repository import TokenRepository
@@ -12,6 +15,7 @@ class HourlyDigestService:
     def __init__(
         self,
         token_repository: TokenRepository,
+        hourly_digest_repository: HourlyDigestRepository,
         snapshot_repository: SnapshotRepository,
         score_repository: ScoreRepository,
         market_ingestion_service: MarketIngestionService,
@@ -19,6 +23,7 @@ class HourlyDigestService:
         notification_service: NotificationService,
     ) -> None:
         self.token_repository = token_repository
+        self.hourly_digest_repository = hourly_digest_repository
         self.snapshot_repository = snapshot_repository
         self.score_repository = score_repository
         self.market_ingestion_service = market_ingestion_service
@@ -27,14 +32,19 @@ class HourlyDigestService:
 
     async def run(self, symbols: list[str]) -> dict:
         normalized_symbols = [symbol.upper() for symbol in symbols]
+        run_record = self._create_run_record()
         digest_rows: list[dict] = []
         for symbol in normalized_symbols:
             digest_rows.append(await self._build_symbol_digest_row(symbol))
 
+        persisted_rows = self._persist_rows(run_record, digest_rows)
         provider_result = await self.notification_service.send_hourly_digest(digest_rows)
+        if run_record is not None:
+            delivery_status = str(provider_result.get("status", "sent")) if isinstance(provider_result, dict) else "sent"
+            self.hourly_digest_repository.update_run_status(run_record["id"], delivery_status)
         return {
             "symbols": normalized_symbols,
-            "rows": digest_rows,
+            "rows": persisted_rows or digest_rows,
             "provider_result": provider_result,
         }
 
@@ -101,6 +111,54 @@ class HourlyDigestService:
             "verified": refresh_error is None and scoring_error is None,
         }
 
+    def _create_run_record(self) -> dict | None:
+        scheduled_for = _scheduled_for_current_hour()
+        try:
+            return self.hourly_digest_repository.create_run(
+                {
+                    "scheduled_for": scheduled_for.isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    "channel": "telegram",
+                    "delivery_status": "pending",
+                }
+            )
+        except Exception:
+            return None
+
+    def _persist_rows(self, run_record: dict | None, digest_rows: list[dict]) -> list[dict]:
+        if run_record is None:
+            return digest_rows
+        payload = []
+        for row in digest_rows:
+            token = self.token_repository.get_by_symbol(row["symbol"])
+            payload.append(
+                {
+                    "run_id": run_record["id"],
+                    "token_id": token["id"] if token else None,
+                    "symbol": row["symbol"],
+                    "status": row["status"],
+                    "signal_type": row.get("signal_type"),
+                    "signal_score": row.get("signal_score"),
+                    "confidence": row.get("confidence"),
+                    "price": row.get("price"),
+                    "market_timestamp": row.get("market_timestamp"),
+                    "why_now": row.get("why_now"),
+                    "mode": row.get("mode"),
+                    "warning": row.get("warning"),
+                    "verified": row.get("verified", False),
+                }
+            )
+        try:
+            persisted_rows = self.hourly_digest_repository.insert_rows(payload)
+            if not persisted_rows:
+                return digest_rows
+            merged: list[dict] = []
+            for source, persisted in zip(digest_rows, persisted_rows, strict=False):
+                merged.append(source | {"id": persisted.get("id"), "run_id": run_record["id"]})
+            return merged
+        except Exception:
+            return digest_rows
+
 
 def _fallback_explanation(symbol: str, signal_type: str) -> dict:
     why_now_map = {
@@ -116,3 +174,8 @@ def _format_error(exc: Exception) -> str:
     name = type(exc).__name__
     detail = str(exc).strip()
     return f"{name}: {detail}" if detail else name
+
+
+def _scheduled_for_current_hour() -> datetime:
+    now = datetime.now(timezone.utc)
+    return now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=0)

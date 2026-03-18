@@ -28,9 +28,18 @@ This branch isolates the Telegram hourly divergence channel and the upcoming tra
 - Only trades `live` signals
 - Ignores `fallback` and `unavailable`
 - Uses a dedicated Hyperliquid agent wallet with limited capital
+- Supports per-symbol leverage overrides via `TRADE_LEVERAGE_MAP`
+- Supports per-symbol notional overrides via `TRADE_NOTIONAL_USD_MAP`
 
 ## Latency Rule
 
 - Treat a digest as valid if it arrives within a small grace window after the expected hour.
 - Recommended grace window for execution logic: `10 minutes`
 - Do not skip a digest solely because it was not emitted exactly at `HH:00`
+
+## First Executor Shape
+
+- Render cron target: `scoutkat-trade-executor-sg`
+- Default run time: `10` minutes after each hour
+- Default confirmation rule: `2` consecutive live hourly digests with the same tradable signal
+- Default hold window: `6` hours

@@ -22,3 +22,25 @@ class TelegramProvider(ABC):
     @abstractmethod
     async def send_signal_alert(self, chat_id: str, message: str) -> dict[str, Any]:
         raise NotImplementedError
+
+
+class TradeExecutionProvider(ABC):
+    @abstractmethod
+    async def configure_leverage(self, symbol: str, leverage: float) -> dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def open_position(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        notional_usd: float,
+        leverage: float,
+        stop_loss_pct: float,
+    ) -> dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def close_position(self, *, symbol: str, side: str) -> dict[str, Any]:
+        raise NotImplementedError

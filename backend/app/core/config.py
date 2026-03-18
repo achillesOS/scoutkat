@@ -31,6 +31,18 @@ class Settings(BaseSettings):
     default_user_email: str = "demo@scoutkat.local"
     tracked_symbols: str = "BTC,ETH,SOL,HYPE,XRP,DOGE,BNB,SUI,ADA,AVAX,LINK"
     hourly_digest_symbols: str = "BTC,ETH,SOL,HYPE,BNB"
+    trade_enabled: bool = False
+    trade_executor_symbols: str = "BTC,ETH,SOL,HYPE,BNB"
+    trade_signal_confirmations: int = 2
+    trade_execution_grace_minutes: int = 10
+    trade_hold_hours: int = 6
+    trade_default_notional_usd: float = 25.0
+    trade_notional_usd_map: str = ""
+    trade_default_leverage: float = 2.0
+    trade_leverage_map: str = "BTC:3,ETH:3,SOL:2,HYPE:2,BNB:2"
+    trade_stop_loss_pct: float = 0.015
+    hl_master_wallet_address: str | None = None
+    hl_agent_private_key: str | None = None
 
     @property
     def scoring_weights_path(self) -> Path:
@@ -66,7 +78,33 @@ class Settings(BaseSettings):
     def hourly_digest_symbol_list(self) -> list[str]:
         return [symbol.strip().upper() for symbol in self.hourly_digest_symbols.split(",") if symbol.strip()]
 
+    @property
+    def trade_executor_symbol_list(self) -> list[str]:
+        return [symbol.strip().upper() for symbol in self.trade_executor_symbols.split(",") if symbol.strip()]
+
+    @property
+    def trade_leverage_by_symbol(self) -> dict[str, float]:
+        return _parse_float_map(self.trade_leverage_map)
+
+    @property
+    def trade_notional_usd_by_symbol(self) -> dict[str, float]:
+        return _parse_float_map(self.trade_notional_usd_map)
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def _parse_float_map(raw: str) -> dict[str, float]:
+    parsed: dict[str, float] = {}
+    for chunk in raw.split(","):
+        item = chunk.strip()
+        if not item or ":" not in item:
+            continue
+        key, value = item.split(":", 1)
+        try:
+            parsed[key.strip().upper()] = float(value.strip())
+        except ValueError:
+            continue
+    return parsed

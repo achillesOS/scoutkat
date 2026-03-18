@@ -147,3 +147,76 @@ services:
         value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
       - key: HOURLY_DIGEST_SYMBOLS
         value: BTC,ETH,SOL,HYPE,BNB
+
+  - type: cron
+    name: scoutkat-trade-executor-sg
+    runtime: python
+    region: singapore
+    rootDir: backend
+    schedule: "10 * * * *"
+    buildCommand: pip install .
+    startCommand: python -m app.jobs.run_trade_executor
+    plan: starter
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ENABLE_SCHEDULER
+        value: "false"
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: HYPERLIQUID_API_URL
+        value: https://api.hyperliquid.xyz
+      - key: GROK_API_URL
+        value: https://api.x.ai/v1/chat/completions
+      - key: GROK_API_KEY
+        sync: false
+      - key: GROK_MODEL
+        value: grok-4-1-fast-non-reasoning
+      - key: GROK_TIMEOUT_SECONDS
+        value: "20"
+      - key: GROK_MAX_RETRIES
+        value: "3"
+      - key: GROK_CACHE_BUCKET_MINUTES
+        value: "30"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_DEFAULT_CHAT_ID
+        sync: false
+      - key: SOCIAL_REFRESH_MINUTES
+        value: "30"
+      - key: ALERT_COOLDOWN_MINUTES
+        value: "90"
+      - key: DEFAULT_USER_EMAIL
+        value: demo@scoutkat.local
+      - key: TRACKED_SYMBOLS
+        value: BTC,ETH,SOL,XRP,DOGE,BNB,HYPE,ZEC,SUI,PEPE
+      - key: HOURLY_DIGEST_SYMBOLS
+        value: BTC,ETH,SOL,HYPE,BNB
+      - key: TRADE_ENABLED
+        value: "false"
+      - key: TRADE_EXECUTOR_SYMBOLS
+        value: BTC,ETH,SOL,HYPE,BNB
+      - key: TRADE_SIGNAL_CONFIRMATIONS
+        value: "2"
+      - key: TRADE_EXECUTION_GRACE_MINUTES
+        value: "10"
+      - key: TRADE_HOLD_HOURS
+        value: "6"
+      - key: TRADE_DEFAULT_NOTIONAL_USD
+        value: "25"
+      - key: TRADE_DEFAULT_LEVERAGE
+        value: "2"
+      - key: TRADE_LEVERAGE_MAP
+        value: BTC:3,ETH:3,SOL:2,HYPE:2,BNB:2
+      - key: TRADE_STOP_LOSS_PCT
+        value: "0.015"
+      - key: HL_MASTER_WALLET_ADDRESS
+        sync: false
+      - key: HL_AGENT_PRIVATE_KEY
+        sync: false

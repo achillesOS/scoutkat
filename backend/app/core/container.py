@@ -3,12 +3,16 @@ from functools import lru_cache
 from app.core.config import get_settings
 from app.providers.grok_provider import DisabledGrokProvider, GrokProvider, GrokXProvider
 from app.providers.hyperliquid_provider import HyperliquidHttpProvider, HyperliquidProvider, UnavailableHyperliquidProvider
+from app.providers.hyperliquid_trade_provider import HyperliquidTradeProvider
 from app.providers.telegram_provider import NoopTelegramProvider, TelegramBotProvider, TelegramProvider
+from app.providers.base import TradeExecutionProvider
+from app.repositories.hourly_digest_repository import HourlyDigestRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.score_repository import ScoreRepository
 from app.repositories.snapshot_repository import SnapshotRepository
 from app.repositories.signal_repository import SignalRepository
 from app.repositories.token_repository import TokenRepository
+from app.repositories.trade_repository import TradeRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.watchlist_repository import WatchlistRepository
 from app.repositories.x_attention_repository import XAttentionRepository
@@ -20,6 +24,7 @@ from app.services.scoring_pipeline_service import ScoringPipelineService
 from app.services.signal_pipeline_service import SignalPipelineService
 from app.services.signal_service import SignalService
 from app.services.token_service import TokenService
+from app.services.trade_executor_service import TradeExecutorService
 from app.services.user_service import UserService
 from app.services.watchlist_service import WatchlistService
 
@@ -38,6 +43,11 @@ def get_grok_provider() -> GrokProvider:
 @lru_cache
 def get_telegram_provider() -> TelegramProvider:
     return TelegramBotProvider() if get_settings().telegram_bot_token else NoopTelegramProvider()
+
+
+@lru_cache
+def get_trade_execution_provider() -> TradeExecutionProvider:
+    return HyperliquidTradeProvider()
 
 
 @lru_cache
@@ -78,6 +88,16 @@ def get_user_repository() -> UserRepository:
 @lru_cache
 def get_notification_repository() -> NotificationRepository:
     return NotificationRepository()
+
+
+@lru_cache
+def get_hourly_digest_repository() -> HourlyDigestRepository:
+    return HourlyDigestRepository()
+
+
+@lru_cache
+def get_trade_repository() -> TradeRepository:
+    return TradeRepository()
 
 
 @lru_cache
@@ -153,11 +173,22 @@ def get_scoring_pipeline_service() -> ScoringPipelineService:
 def get_hourly_digest_service() -> HourlyDigestService:
     return HourlyDigestService(
         token_repository=get_token_repository(),
+        hourly_digest_repository=get_hourly_digest_repository(),
         snapshot_repository=get_snapshot_repository(),
         score_repository=get_score_repository(),
         market_ingestion_service=get_market_ingestion_service(),
         scoring_pipeline_service=get_scoring_pipeline_service(),
         notification_service=get_notification_service(),
+    )
+
+
+@lru_cache
+def get_trade_executor_service() -> TradeExecutorService:
+    return TradeExecutorService(
+        token_repository=get_token_repository(),
+        hourly_digest_repository=get_hourly_digest_repository(),
+        trade_repository=get_trade_repository(),
+        trade_provider=get_trade_execution_provider(),
     )
 
 

@@ -5,6 +5,7 @@ from app.core.container import (
     get_hourly_digest_service,
     get_market_ingestion_service,
     get_scoring_pipeline_service,
+    get_trade_executor_service,
 )
 
 
@@ -46,3 +47,18 @@ def send_hourly_digest_job() -> None:
         )
     except Exception as exc:
         print(f"send_hourly_digest_job: failed with {type(exc).__name__}: {exc}")
+
+
+def run_trade_executor_job() -> None:
+    settings = get_settings()
+    if not settings.trade_enabled:
+        print("run_trade_executor_job: skipped because TRADE_ENABLED=false")
+        return
+    try:
+        result = asyncio.run(get_trade_executor_service().run())
+        print(
+            "run_trade_executor_job: "
+            f"{result.get('status', 'unknown')} for {','.join(settings.trade_executor_symbol_list)}"
+        )
+    except Exception as exc:
+        print(f"run_trade_executor_job: failed with {type(exc).__name__}: {exc}")
