@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     trade_margin_mode: str = "isolated"
     trade_max_open_positions: int = 2
     trade_stop_loss_pct: float = 0.015
+    trade_stop_loss_pct_map: str = "BTC:0.01,SOL:0.015"
     hl_master_wallet_address: str | None = None
     hl_agent_private_key: str | None = None
 
@@ -91,6 +92,10 @@ class Settings(BaseSettings):
     @property
     def trade_notional_usd_by_symbol(self) -> dict[str, float]:
         return _parse_float_map(self.trade_notional_usd_map)
+
+    @property
+    def trade_stop_loss_pct_by_symbol(self) -> dict[str, float]:
+        return _parse_float_map(self.trade_stop_loss_pct_map)
 
 
 @lru_cache

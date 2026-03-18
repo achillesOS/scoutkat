@@ -148,6 +148,10 @@ class TradeExecutorService:
             decision.symbol,
             self.settings.trade_default_notional_usd,
         )
+        stop_loss_pct = self.settings.trade_stop_loss_pct_by_symbol.get(
+            decision.symbol,
+            self.settings.trade_stop_loss_pct,
+        )
 
         leverage_result = await self.trade_provider.configure_leverage(decision.symbol, leverage)
         open_result = await self.trade_provider.open_position(
@@ -156,7 +160,7 @@ class TradeExecutorService:
             notional_usd=notional_usd,
             leverage=leverage,
             margin_mode=self.settings.trade_margin_mode,
-            stop_loss_pct=self.settings.trade_stop_loss_pct,
+            stop_loss_pct=stop_loss_pct,
         )
 
         position = None
@@ -190,7 +194,7 @@ class TradeExecutorService:
                     "notional_usd": notional_usd,
                     "leverage": leverage,
                     "margin_mode": self.settings.trade_margin_mode,
-                    "stop_loss_pct": self.settings.trade_stop_loss_pct,
+                    "stop_loss_pct": stop_loss_pct,
                 },
                 "response_json": {
                     "configure_leverage": leverage_result,
@@ -205,6 +209,7 @@ class TradeExecutorService:
             "leverage": leverage,
             "margin_mode": self.settings.trade_margin_mode,
             "notional_usd": notional_usd,
+            "stop_loss_pct": stop_loss_pct,
             "provider_status": provider_status,
         }
 

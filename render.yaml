@@ -222,6 +222,8 @@ services:
         value: "2"
       - key: TRADE_STOP_LOSS_PCT
         value: "0.015"
+      - key: TRADE_STOP_LOSS_PCT_MAP
+        value: BTC:0.01,SOL:0.015
       - key: HL_MASTER_WALLET_ADDRESS
         sync: false
       - key: HL_AGENT_PRIVATE_KEY
