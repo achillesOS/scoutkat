@@ -11,6 +11,7 @@ from app.providers.base import HyperliquidProvider
 class HyperliquidHttpProvider(HyperliquidProvider):
     def __init__(self) -> None:
         self.settings = get_settings()
+        self._cache: dict[str, tuple[float, Any]] = {}
 
     async def _fetch_asset_context(self, symbol: str) -> tuple[dict[str, Any], dict[str, Any]]:
         payload = await self._post_info({"type": "metaAndAssetCtxs"})
@@ -22,9 +23,15 @@ class HyperliquidHttpProvider(HyperliquidProvider):
         raise ValueError(f"Hyperliquid asset context not found for {symbol}")
 
     async def _post_info(self, payload: dict[str, Any]) -> Any:
+        cache_key = str(payload)
+        now_ts = datetime.now(timezone.utc).timestamp()
+        cached = self._cache.get(cache_key)
+        if cached and (now_ts - cached[0]) <= 5:
+            return cached[1]
+
         last_error: Exception | None = None
         delay = 1.0
-        for attempt in range(3):
+        for attempt in range(4):
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     response = await client.post(
@@ -32,10 +39,20 @@ class HyperliquidHttpProvider(HyperliquidProvider):
                         json=payload,
                     )
                     response.raise_for_status()
-                    return response.json()
+                    parsed = response.json()
+                    self._cache[cache_key] = (datetime.now(timezone.utc).timestamp(), parsed)
+                    return parsed
+            except httpx.HTTPStatusError as exc:
+                last_error = exc
+                status_code = exc.response.status_code if exc.response is not None else None
+                if status_code == 429 and attempt < 3:
+                    await asyncio.sleep(delay)
+                    delay *= 2
+                    continue
+                break
             except Exception as exc:
                 last_error = exc
-                if attempt == 2:
+                if attempt == 3:
                     break
                 await asyncio.sleep(delay)
                 delay *= 2

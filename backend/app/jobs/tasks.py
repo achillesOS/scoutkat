@@ -12,10 +12,17 @@ from app.core.container import (
 
 def fetch_market_snapshots_job() -> None:
     settings = get_settings()
-    results = asyncio.run(
-        get_market_ingestion_service().ingest_tracked_tokens(settings.tracked_symbol_list)
-    )
-    print(f"fetch_market_snapshots_job: ingested {len(results)} tokens")
+    try:
+        results = asyncio.run(
+            get_market_ingestion_service().ingest_tracked_tokens(settings.tracked_symbol_list)
+        )
+        failed = [row for row in results if row.get("error")]
+        print(
+            "fetch_market_snapshots_job: "
+            f"processed {len(results)} tokens, failed {len(failed)}"
+        )
+    except Exception as exc:
+        print(f"fetch_market_snapshots_job: failed with {type(exc).__name__}: {exc}")
 
 
 def fetch_positioning_snapshots_job() -> None:
@@ -28,10 +35,13 @@ def fetch_grok_shortlist_job() -> None:
 
 def compute_scores_job() -> None:
     settings = get_settings()
-    results = asyncio.run(
-        get_scoring_pipeline_service().run_for_tracked_tokens(settings.tracked_symbol_list)
-    )
-    print(f"compute_scores_job: wrote {len(results)} score snapshots")
+    try:
+        results = asyncio.run(
+            get_scoring_pipeline_service().run_for_tracked_tokens(settings.tracked_symbol_list)
+        )
+        print(f"compute_scores_job: wrote {len(results)} score snapshots")
+    except Exception as exc:
+        print(f"compute_scores_job: failed with {type(exc).__name__}: {exc}")
 
 
 def detect_signals_job() -> None:
