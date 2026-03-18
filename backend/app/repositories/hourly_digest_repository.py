@@ -57,6 +57,7 @@ class HourlyDigestRepository:
             client.table("hourly_digest_runs")
             .select("*")
             .lte("scheduled_for", cutoff)
+            .eq("delivery_status", "sent")
             .order("scheduled_for", desc=True)
             .order("generated_at", desc=True)
             .limit(10)
