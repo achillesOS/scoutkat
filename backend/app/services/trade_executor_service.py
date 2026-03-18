@@ -51,6 +51,7 @@ class TradeExecutorService:
         run_rows = self.hourly_digest_repository.rows_for_run(latest_run["id"])
         rows_by_symbol = {row["symbol"]: row for row in run_rows}
         live_position_list = await self.trade_provider.get_open_positions(self.settings.trade_executor_symbol_list)
+        self._sync_live_positions(live_position_list)
         live_positions = {position["symbol"]: position for position in live_position_list}
         results: list[dict] = []
 
@@ -84,6 +85,32 @@ class TradeExecutorService:
             "results": results,
             "account_summary": await self.trade_provider.get_account_summary(),
         }
+
+    def _sync_live_positions(self, live_position_list: list[dict]) -> None:
+        for live_position in live_position_list:
+            symbol = str(live_position.get("symbol", "")).upper()
+            if not symbol:
+                continue
+            if self.trade_repository.latest_open_position_for_symbol(symbol) is not None:
+                continue
+            token = self.token_repository.get_by_symbol(symbol)
+            if token is None:
+                continue
+            self.trade_repository.create_position(
+                {
+                    "id": str(uuid4()),
+                    "token_id": token["id"],
+                    "symbol": symbol,
+                    "side": str(live_position.get("side", "")),
+                    "signal_type": "reconciled_live_position",
+                    "source_digest_row_id": None,
+                    "entry_price": float(live_position.get("entry_price", 0.0) or 0.0),
+                    "entry_notional_usd": float(live_position.get("position_value", 0.0) or 0.0),
+                    "leverage": float(live_position.get("leverage", 0.0) or 0.0),
+                    "status": "open",
+                    "opened_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
 
     def _decide(
         self,
