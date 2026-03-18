@@ -31,6 +31,7 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
         side: str,
         notional_usd: float,
         leverage: float,
+        margin_mode: str,
         stop_loss_pct: float,
     ) -> dict[str, Any]:
         if not self._configured():
@@ -46,6 +47,7 @@ class HyperliquidTradeProvider(TradeExecutionProvider):
             "side": side,
             "notional_usd": notional_usd,
             "leverage": leverage,
+            "margin_mode": margin_mode,
             "stop_loss_pct": stop_loss_pct,
         }
 

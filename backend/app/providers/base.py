@@ -37,6 +37,7 @@ class TradeExecutionProvider(ABC):
         side: str,
         notional_usd: float,
         leverage: float,
+        margin_mode: str,
         stop_loss_pct: float,
     ) -> dict[str, Any]:
         raise NotImplementedError

@@ -64,6 +64,8 @@ class TradeExecutorService:
             return TradeDecision(symbol=symbol, action="close", side=side, reason="hold_window_expired")
         if open_position is not None:
             return TradeDecision(symbol=symbol, action="skip", reason="existing_open_position")
+        if len(self.trade_repository.list_open_positions()) >= self.settings.trade_max_open_positions:
+            return TradeDecision(symbol=symbol, action="skip", reason="max_open_positions_reached")
         if latest_row is None:
             return TradeDecision(symbol=symbol, action="skip", reason="missing_digest_row")
         if latest_row.get("status") != "ok":
@@ -110,6 +112,7 @@ class TradeExecutorService:
             side=decision.side,
             notional_usd=notional_usd,
             leverage=leverage,
+            margin_mode=self.settings.trade_margin_mode,
             stop_loss_pct=self.settings.trade_stop_loss_pct,
         )
 
@@ -143,6 +146,7 @@ class TradeExecutorService:
                     "side": decision.side,
                     "notional_usd": notional_usd,
                     "leverage": leverage,
+                    "margin_mode": self.settings.trade_margin_mode,
                     "stop_loss_pct": self.settings.trade_stop_loss_pct,
                 },
                 "response_json": {
@@ -156,6 +160,7 @@ class TradeExecutorService:
             "action": "open" if position else "preview",
             "side": decision.side,
             "leverage": leverage,
+            "margin_mode": self.settings.trade_margin_mode,
             "notional_usd": notional_usd,
             "provider_status": provider_status,
         }

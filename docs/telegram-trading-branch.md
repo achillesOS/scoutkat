@@ -30,6 +30,7 @@ This branch isolates the Telegram hourly divergence channel and the upcoming tra
 - Uses a dedicated Hyperliquid agent wallet with limited capital
 - Supports per-symbol leverage overrides via `TRADE_LEVERAGE_MAP`
 - Supports per-symbol notional overrides via `TRADE_NOTIONAL_USD_MAP`
+- Supports `TRADE_MARGIN_MODE=isolated|cross`
 
 ## Latency Rule
 
@@ -43,3 +44,4 @@ This branch isolates the Telegram hourly divergence channel and the upcoming tra
 - Default run time: `10` minutes after each hour
 - Default confirmation rule: `2` consecutive live hourly digests with the same tradable signal
 - Default hold window: `6` hours
+- Current target pair set: `BTC,SOL`

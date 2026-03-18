@@ -201,7 +201,7 @@ services:
       - key: TRADE_ENABLED
         value: "false"
       - key: TRADE_EXECUTOR_SYMBOLS
-        value: BTC,ETH,SOL,HYPE,BNB
+        value: BTC,SOL
       - key: TRADE_SIGNAL_CONFIRMATIONS
         value: "2"
       - key: TRADE_EXECUTION_GRACE_MINUTES
@@ -209,11 +209,17 @@ services:
       - key: TRADE_HOLD_HOURS
         value: "6"
       - key: TRADE_DEFAULT_NOTIONAL_USD
-        value: "25"
+        value: "10"
       - key: TRADE_DEFAULT_LEVERAGE
-        value: "2"
+        value: "5"
       - key: TRADE_LEVERAGE_MAP
-        value: BTC:3,ETH:3,SOL:2,HYPE:2,BNB:2
+        value: BTC:10,SOL:5
+      - key: TRADE_NOTIONAL_USD_MAP
+        value: BTC:10,SOL:10
+      - key: TRADE_MARGIN_MODE
+        value: isolated
+      - key: TRADE_MAX_OPEN_POSITIONS
+        value: "2"
       - key: TRADE_STOP_LOSS_PCT
         value: "0.015"
       - key: HL_MASTER_WALLET_ADDRESS
