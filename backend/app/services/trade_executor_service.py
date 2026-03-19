@@ -138,6 +138,10 @@ class TradeExecutorService:
         confirmed_row = self._confirmed_row(recent_rows)
         if confirmed_row is None:
             return TradeDecision(symbol=symbol, action="skip", reason="confirmation_not_met")
+        if float(confirmed_row.get("signal_score", 0.0) or 0.0) < self.settings.trade_min_signal_score:
+            return TradeDecision(symbol=symbol, action="skip", reason="signal_score_below_trade_floor")
+        if float(confirmed_row.get("confidence", 0.0) or 0.0) < self.settings.trade_min_confidence:
+            return TradeDecision(symbol=symbol, action="skip", reason="confidence_below_trade_floor")
 
         side = _signal_to_side(str(confirmed_row["signal_type"]))
         if side is None:
