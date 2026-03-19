@@ -32,6 +32,20 @@ class TradeRepository:
         )
         return response.data[0] if response.data else None
 
+    def open_positions_by_symbols(self, symbols: list[str]) -> list[dict]:
+        client = get_supabase_client()
+        if client is None:
+            return []
+        response = (
+            client.table("trade_positions")
+            .select("*")
+            .in_("symbol", [symbol.upper() for symbol in symbols])
+            .eq("status", "open")
+            .order("opened_at", desc=True)
+            .execute()
+        )
+        return list(response.data or [])
+
     def create_position(self, payload: dict) -> dict | None:
         client = get_supabase_client()
         if client is None:

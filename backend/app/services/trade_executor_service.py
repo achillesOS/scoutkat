@@ -52,8 +52,9 @@ class TradeExecutorService:
         rows_by_symbol = {row["symbol"]: row for row in run_rows}
         live_position_list = await self.trade_provider.get_open_positions(self.settings.trade_executor_symbol_list)
         self._sync_live_positions(live_position_list)
+        reconciled_results = self._reconcile_missing_live_positions(live_position_list)
         live_positions = {position["symbol"]: position for position in live_position_list}
-        results: list[dict] = []
+        results: list[dict] = list(reconciled_results)
 
         for symbol in self.settings.trade_executor_symbol_list:
             latest_row = rows_by_symbol.get(symbol)
@@ -111,6 +112,43 @@ class TradeExecutorService:
                     "opened_at": datetime.now(timezone.utc).isoformat(),
                 }
             )
+
+    def _reconcile_missing_live_positions(self, live_position_list: list[dict]) -> list[dict]:
+        live_symbols = {str(position.get("symbol", "")).upper() for position in live_position_list}
+        open_positions = self.trade_repository.open_positions_by_symbols(self.settings.trade_executor_symbol_list)
+        results: list[dict] = []
+        for open_position in open_positions:
+            symbol = str(open_position.get("symbol", "")).upper()
+            if symbol in live_symbols:
+                continue
+            self.trade_repository.close_position(
+                str(open_position["id"]),
+                {
+                    "status": "closed",
+                    "close_reason": "reconciled_external_close",
+                    "closed_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            self.trade_repository.insert_execution_log(
+                {
+                    "position_id": open_position["id"],
+                    "symbol": symbol,
+                    "action": "close",
+                    "status": "reconciled_external_close",
+                    "provider_order_id": None,
+                    "request_json": {"symbol": symbol, "reason": "reconciled_external_close"},
+                    "response_json": {"live_position_missing": True},
+                }
+            )
+            results.append(
+                {
+                    "symbol": symbol,
+                    "action": "close",
+                    "reason": "reconciled_external_close",
+                    "provider_status": "reconciled_external_close",
+                }
+            )
+        return results
 
     def _decide(
         self,

@@ -87,6 +87,21 @@ class HourlyDigestRepository:
         )
         return list(response.data or [])
 
+    def latest_sent_run(self) -> dict | None:
+        client = get_supabase_client()
+        if client is None:
+            return None
+        response = (
+            client.table("hourly_digest_runs")
+            .select("*")
+            .eq("delivery_status", "sent")
+            .order("scheduled_for", desc=True)
+            .order("generated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        return response.data[0] if response.data else None
+
 
 def _parse_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)

@@ -37,14 +37,20 @@ class HourlyDigestService:
         for symbol in normalized_symbols:
             digest_rows.append(await self._build_symbol_digest_row(symbol))
 
-        persisted_rows = self._persist_rows(run_record, digest_rows)
-        provider_result = await self.notification_service.send_hourly_digest(digest_rows)
+        previous_sent_run = self.hourly_digest_repository.latest_sent_run()
+        previous_rows = self.hourly_digest_repository.rows_for_run(str(previous_sent_run["id"])) if previous_sent_run else []
+        changed_rows = _changed_rows(digest_rows, previous_rows)
+        persisted_rows = self._persist_rows(run_record, changed_rows)
+        if not changed_rows:
+            provider_result = {"status": "skipped_no_change"}
+        else:
+            provider_result = await self.notification_service.send_hourly_digest(changed_rows)
         if run_record is not None:
             delivery_status = str(provider_result.get("status", "sent")) if isinstance(provider_result, dict) else "sent"
             self.hourly_digest_repository.update_run_status(run_record["id"], delivery_status)
         return {
             "symbols": normalized_symbols,
-            "rows": persisted_rows or digest_rows,
+            "rows": persisted_rows or changed_rows,
             "provider_result": provider_result,
         }
 
@@ -178,4 +184,19 @@ def _format_error(exc: Exception) -> str:
 
 def _scheduled_for_current_hour() -> datetime:
     now = datetime.now(timezone.utc)
-    return now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=0)
+    bucket_minute = (now.minute // 10) * 10
+    return now.replace(minute=bucket_minute, second=0, microsecond=0) + timedelta(hours=0)
+
+
+def _changed_rows(current_rows: list[dict], previous_rows: list[dict]) -> list[dict]:
+    previous_by_symbol = {row["symbol"]: row for row in previous_rows}
+    changed: list[dict] = []
+    for row in current_rows:
+        previous = previous_by_symbol.get(row["symbol"])
+        if previous is None:
+            changed.append(row)
+            continue
+        comparable_fields = ("status", "signal_type", "mode", "verified")
+        if any(previous.get(field) != row.get(field) for field in comparable_fields):
+            changed.append(row)
+    return changed

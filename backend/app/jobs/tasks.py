@@ -67,10 +67,18 @@ def run_trade_executor_job() -> None:
         return
     try:
         result = asyncio.run(get_trade_executor_service().run())
-        asyncio.run(get_notification_service().send_trade_executor_report(result))
+        if _should_send_trade_executor_report(result):
+            asyncio.run(get_notification_service().send_trade_executor_report(result))
         print(
             "run_trade_executor_job: "
             f"{result.get('status', 'unknown')} for {','.join(settings.trade_executor_symbol_list)}"
         )
     except Exception as exc:
         print(f"run_trade_executor_job: failed with {type(exc).__name__}: {exc}")
+
+
+def _should_send_trade_executor_report(result: dict) -> bool:
+    for item in result.get("results", []):
+        if item.get("action") != "skip":
+            return True
+    return False

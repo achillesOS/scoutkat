@@ -84,7 +84,7 @@ class NotificationService:
     def _format_hourly_digest_message(self, digest_rows: list[dict]) -> str:
         now_local = datetime.now(ZoneInfo("Asia/Shanghai"))
         lines = [
-            "Scoutkat 每小时背离播报",
+            "Scoutkat 信号变化提醒",
             f"播报时间: {now_local.strftime('%Y-%m-%d %H:%M:%S CST')}",
             "",
         ]
