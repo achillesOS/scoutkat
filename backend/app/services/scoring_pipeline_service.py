@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.core.config import get_settings
-from app.models.enums import SignalStatus
+from app.models.enums import SignalStatus, SignalType
 from app.providers.base import GrokProvider
 from app.repositories.score_repository import ScoreRepository, cooldown_cutoff_iso
 from app.repositories.signal_repository import SignalRepository
@@ -72,6 +72,8 @@ class ScoringPipelineService:
                 positioning_snapshot=positioning,
                 previous_score=previous_score,
             )
+            published_signal_type = self._stabilize_signal_type(scores, previous_score)
+            scores["signal_type"] = str(published_signal_type)
 
             score_row = self.score_repository.insert_score_snapshot(
                 {
@@ -346,6 +348,39 @@ class ScoringPipelineService:
                 )
                 return True
         return False
+
+    def _stabilize_signal_type(self, scores: dict, previous_score: dict | None) -> SignalType:
+        thresholds = self.detection_service.thresholds
+        candidate_floor = float(thresholds["candidate_signal_floor"])
+        confidence_floor = float(thresholds["confidence_floor"])
+        flip_margin = float(thresholds.get("signal_flip_margin", 6))
+
+        signal_score = float(scores.get("signal_score", 0.0) or 0.0)
+        confidence = float(scores.get("confidence", 0.0) or 0.0)
+        if signal_score < candidate_floor or confidence < confidence_floor:
+            return SignalType.NEUTRAL
+
+        current_scores = {
+            SignalType.HIDDEN_ACCUMULATION: float(scores.get("hidden_accumulation_score", 0.0) or 0.0),
+            SignalType.NARRATIVE_IGNITION: float(scores.get("narrative_ignition_score", 0.0) or 0.0),
+            SignalType.RETAIL_TRAP: float(scores.get("retail_trap_score", 0.0) or 0.0),
+        }
+        ordered_scores = sorted(current_scores.items(), key=lambda item: item[1], reverse=True)
+        leader, leader_score = ordered_scores[0]
+        runner_up_score = ordered_scores[1][1]
+
+        previous_signal_type = str(previous_score.get("signal_type", "")) if previous_score else ""
+        if previous_signal_type in {signal.value for signal in current_scores}:
+            previous_type = SignalType(previous_signal_type)
+            previous_live_score = current_scores[previous_type]
+            if previous_type != leader and previous_live_score >= candidate_floor and (leader_score - previous_live_score) < flip_margin:
+                return previous_type
+            if previous_type == leader and (leader_score - runner_up_score) < flip_margin:
+                return previous_type
+
+        if (leader_score - runner_up_score) < flip_margin:
+            return SignalType.NEUTRAL
+        return leader
 
     def _is_stale(self, latest_timestamp: datetime | None) -> bool:
         if latest_timestamp is None:

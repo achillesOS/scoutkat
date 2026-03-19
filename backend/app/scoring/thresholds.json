@@ -2,7 +2,7 @@
   "candidate_signal_floor": 55,
   "high_priority_signal_floor": 75,
   "confidence_floor": 0.6,
+  "signal_flip_margin": 6,
   "social_stale_minutes": 30,
   "signal_cooldown_minutes": 90
 }
-
