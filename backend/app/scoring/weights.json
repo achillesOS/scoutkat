@@ -38,10 +38,11 @@
       "delta_structure": 0.20
     },
     "retail_trap": {
-      "attention_score": 0.45,
-      "structure_score": -0.25,
-      "positioning_score": 0.30
+      "attention_score": 0.40,
+      "structure_score": -0.35,
+      "positioning_score": 0.35,
+      "delta_attention": 0.10,
+      "delta_structure": -0.25
     }
   }
 }
-

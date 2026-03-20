@@ -12,6 +12,14 @@ def normalize_unit_to_100(value: float) -> float:
     return round(clamp((value + 1) / 2, 0.0, 1.0) * 100, 2)
 
 
+def positive_part(value: float) -> float:
+    return max(value, 0.0)
+
+
+def negative_part(value: float) -> float:
+    return max(-value, 0.0)
+
+
 @dataclass
 class ScoreBundle:
     attention_score: float
@@ -67,13 +75,15 @@ class ScoringEngine:
             signal_weights["narrative_ignition"]["attention_score"] * attention_score
             + signal_weights["narrative_ignition"]["structure_score"] * structure_score
             + signal_weights["narrative_ignition"]["positioning_score"] * positioning_score
-            + signal_weights["narrative_ignition"]["delta_attention"] * delta_attention
-            + signal_weights["narrative_ignition"]["delta_structure"] * delta_structure
+            + signal_weights["narrative_ignition"]["delta_attention"] * positive_part(delta_attention)
+            + signal_weights["narrative_ignition"]["delta_structure"] * positive_part(delta_structure)
         )
         trap = (
             signal_weights["retail_trap"]["attention_score"] * attention_score
             + signal_weights["retail_trap"]["structure_score"] * structure_score
             + signal_weights["retail_trap"]["positioning_score"] * positioning_score
+            + signal_weights["retail_trap"]["delta_attention"] * positive_part(delta_attention)
+            + abs(signal_weights["retail_trap"]["delta_structure"]) * negative_part(delta_structure)
         )
 
         raw_scores = {
@@ -81,11 +91,18 @@ class ScoringEngine:
             SignalType.NARRATIVE_IGNITION: ignition,
             SignalType.RETAIL_TRAP: trap,
         }
-        signal_type = max(raw_scores, key=raw_scores.get)
-        signal_score = normalize_unit_to_100(raw_scores[signal_type])
-        intensity = clamp(abs(raw_scores[signal_type]), 0.0, 1.0)
+        ranked = sorted(raw_scores.items(), key=lambda item: item[1], reverse=True)
+        signal_type, leader_raw = ranked[0]
+        runner_up_raw = ranked[1][1]
+        gap = max(leader_raw - runner_up_raw, 0.0)
+        signal_score = round(min(normalize_unit_to_100(leader_raw) + (clamp(gap / 0.18) * 8), 100.0), 2)
+        conviction = clamp((signal_score - 55) / 20, 0.0, 1.0)
+        separation = clamp(gap / 0.18, 0.0, 1.0)
         consistency = clamp((abs(structure_score) + abs(attention_score) + abs(positioning_score)) / 3)
-        confidence = round(clamp((0.45 * intensity) + (0.30 * consistency) + (0.25 * completeness)), 2)
+        confidence = round(
+            clamp((0.45 * conviction) + (0.30 * separation) + (0.15 * consistency) + (0.10 * completeness)),
+            2,
+        )
 
         return ScoreBundle(
             attention_score=round(normalize_unit_to_100(attention_score), 2),
@@ -98,4 +115,3 @@ class ScoringEngine:
             signal_score=signal_score,
             confidence=confidence,
         )
-
