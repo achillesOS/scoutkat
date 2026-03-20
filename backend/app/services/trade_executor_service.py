@@ -7,6 +7,7 @@ from uuid import uuid4
 from app.core.config import get_settings
 from app.providers.base import TradeExecutionProvider
 from app.repositories.hourly_digest_repository import HourlyDigestRepository
+from app.repositories.signal_recorder_repository import SignalRecorderRepository
 from app.repositories.token_repository import TokenRepository
 from app.repositories.trade_repository import TradeRepository
 
@@ -28,12 +29,14 @@ class TradeExecutorService:
         hourly_digest_repository: HourlyDigestRepository,
         trade_repository: TradeRepository,
         trade_provider: TradeExecutionProvider,
+        signal_recorder_repository: SignalRecorderRepository,
     ) -> None:
         self.settings = get_settings()
         self.token_repository = token_repository
         self.hourly_digest_repository = hourly_digest_repository
         self.trade_repository = trade_repository
         self.trade_provider = trade_provider
+        self.signal_recorder_repository = signal_recorder_repository
 
     async def run(self) -> dict:
         latest_run = self.hourly_digest_repository.latest_run_within_window(self.settings.trade_execution_grace_minutes)
@@ -176,9 +179,13 @@ class TradeExecutorService:
         confirmed_row = self._confirmed_row(recent_rows)
         if confirmed_row is None:
             return TradeDecision(symbol=symbol, action="skip", reason="confirmation_not_met")
-        if float(confirmed_row.get("signal_score", 0.0) or 0.0) < self.settings.trade_min_signal_score:
+        min_signal_score, min_confidence, optimizer_snapshot = self._effective_trade_thresholds(
+            symbol,
+            str(confirmed_row["signal_type"]),
+        )
+        if float(confirmed_row.get("signal_score", 0.0) or 0.0) < min_signal_score:
             return TradeDecision(symbol=symbol, action="skip", reason="signal_score_below_trade_floor")
-        if float(confirmed_row.get("confidence", 0.0) or 0.0) < self.settings.trade_min_confidence:
+        if float(confirmed_row.get("confidence", 0.0) or 0.0) < min_confidence:
             return TradeDecision(symbol=symbol, action="skip", reason="confidence_below_trade_floor")
 
         side = _signal_to_side(str(confirmed_row["signal_type"]))
@@ -194,14 +201,14 @@ class TradeExecutorService:
                 side=side,
                 signal_type=str(confirmed_row["signal_type"]),
                 reason="reverse_on_confirmed_signal",
-                digest_row=confirmed_row,
+                digest_row={**confirmed_row, "_optimizer_snapshot": optimizer_snapshot},
             )
         return TradeDecision(
             symbol=symbol,
             action="open",
             side=side,
             signal_type=str(confirmed_row["signal_type"]),
-            digest_row=confirmed_row,
+            digest_row={**confirmed_row, "_optimizer_snapshot": optimizer_snapshot},
         )
 
     async def _open_position(self, decision: TradeDecision) -> dict:
@@ -264,6 +271,7 @@ class TradeExecutorService:
                     "leverage": leverage,
                     "margin_mode": self.settings.trade_margin_mode,
                     "stop_loss_pct": stop_loss_pct,
+                    "optimizer_snapshot": decision.digest_row.get("_optimizer_snapshot"),
                 },
                 "response_json": {
                     "configure_leverage": leverage_result,
@@ -345,6 +353,21 @@ class TradeExecutorService:
         opened_at = datetime.fromisoformat(str(opened_at_raw).replace("Z", "+00:00")).astimezone(timezone.utc)
         expires_at = opened_at + timedelta(hours=self.settings.trade_hold_hours)
         return datetime.now(timezone.utc) >= expires_at
+
+    def _effective_trade_thresholds(self, symbol: str, signal_type: str) -> tuple[float, float, dict | None]:
+        min_signal_score = self.settings.trade_min_signal_score
+        min_confidence = self.settings.trade_min_confidence
+        optimizer_snapshot = self.signal_recorder_repository.latest_optimizer_snapshot(symbol, signal_type, horizon_minutes=60)
+        if optimizer_snapshot is None:
+            return min_signal_score, min_confidence, None
+        sample_size = int(optimizer_snapshot.get("sample_size", 0) or 0)
+        if sample_size < 8:
+            return min_signal_score, min_confidence, optimizer_snapshot
+        recommended_score = float(optimizer_snapshot.get("recommended_min_score", min_signal_score) or min_signal_score)
+        recommended_confidence = float(
+            optimizer_snapshot.get("recommended_min_confidence", min_confidence) or min_confidence
+        )
+        return max(min_signal_score, recommended_score), max(min_confidence, recommended_confidence), optimizer_snapshot
 
 
 def _signal_to_side(signal_type: str) -> str | None:

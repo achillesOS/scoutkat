@@ -6,6 +6,7 @@ from app.core.container import (
     get_market_ingestion_service,
     get_notification_service,
     get_scoring_pipeline_service,
+    get_signal_recorder_service,
     get_trade_executor_service,
 )
 
@@ -46,6 +47,18 @@ def compute_scores_job() -> None:
 
 def detect_signals_job() -> None:
     print("detect_signals_job: handled inside compute_scores_job for MVP")
+
+
+def run_signal_recorder_job() -> None:
+    try:
+        result = get_signal_recorder_service().run()
+        print(
+            "run_signal_recorder_job: "
+            f"{result.get('status', 'unknown')} with {result.get('recorded_outcomes', 0)} outcomes "
+            f"and {result.get('optimizer_updates', 0)} optimizer snapshots"
+        )
+    except Exception as exc:
+        print(f"run_signal_recorder_job: failed with {type(exc).__name__}: {exc}")
 
 
 def send_hourly_digest_job() -> None:

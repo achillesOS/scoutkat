@@ -9,6 +9,7 @@ from app.providers.base import TradeExecutionProvider
 from app.repositories.hourly_digest_repository import HourlyDigestRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.score_repository import ScoreRepository
+from app.repositories.signal_recorder_repository import SignalRecorderRepository
 from app.repositories.snapshot_repository import SnapshotRepository
 from app.repositories.signal_repository import SignalRepository
 from app.repositories.token_repository import TokenRepository
@@ -21,6 +22,7 @@ from app.services.hourly_digest_service import HourlyDigestService
 from app.services.market_ingestion_service import MarketIngestionService
 from app.services.notification_service import NotificationService
 from app.services.scoring_pipeline_service import ScoringPipelineService
+from app.services.signal_recorder_service import SignalRecorderService
 from app.services.signal_pipeline_service import SignalPipelineService
 from app.services.signal_service import SignalService
 from app.services.token_service import TokenService
@@ -78,6 +80,11 @@ def get_x_attention_repository() -> XAttentionRepository:
 @lru_cache
 def get_score_repository() -> ScoreRepository:
     return ScoreRepository()
+
+
+@lru_cache
+def get_signal_recorder_repository() -> SignalRecorderRepository:
+    return SignalRecorderRepository()
 
 
 @lru_cache
@@ -189,6 +196,17 @@ def get_trade_executor_service() -> TradeExecutorService:
         hourly_digest_repository=get_hourly_digest_repository(),
         trade_repository=get_trade_repository(),
         trade_provider=get_trade_execution_provider(),
+        signal_recorder_repository=get_signal_recorder_repository(),
+    )
+
+
+@lru_cache
+def get_signal_recorder_service() -> SignalRecorderService:
+    return SignalRecorderService(
+        token_repository=get_token_repository(),
+        signal_repository=get_signal_repository(),
+        snapshot_repository=get_snapshot_repository(),
+        signal_recorder_repository=get_signal_recorder_repository(),
     )
 
 
