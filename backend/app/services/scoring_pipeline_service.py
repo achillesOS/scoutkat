@@ -354,12 +354,11 @@ class ScoringPipelineService:
         candidate_floor = float(thresholds["candidate_signal_floor"])
         confidence_floor = float(thresholds["confidence_floor"])
         flip_margin = float(thresholds.get("signal_flip_margin", 6))
+        trend_carry_floor = float(thresholds.get("signal_trend_carry_floor", candidate_floor - 3))
+        trend_hold_margin = float(thresholds.get("signal_trend_hold_margin", 10))
 
         signal_score = float(scores.get("signal_score", 0.0) or 0.0)
         confidence = float(scores.get("confidence", 0.0) or 0.0)
-        if signal_score < candidate_floor or confidence < confidence_floor:
-            return SignalType.NEUTRAL
-
         current_scores = {
             SignalType.HIDDEN_ACCUMULATION: float(scores.get("hidden_accumulation_score", 0.0) or 0.0),
             SignalType.NARRATIVE_IGNITION: float(scores.get("narrative_ignition_score", 0.0) or 0.0),
@@ -373,11 +372,22 @@ class ScoringPipelineService:
         if previous_signal_type in {signal.value for signal in current_scores}:
             previous_type = SignalType(previous_signal_type)
             previous_live_score = current_scores[previous_type]
+            previous_signal_score = float(previous_score.get("signal_score", 0.0) or 0.0)
+            previous_confidence = float(previous_score.get("confidence", 0.0) or 0.0)
+
+            if (
+                signal_score < candidate_floor or confidence < confidence_floor
+            ) and previous_signal_score >= candidate_floor and previous_confidence >= confidence_floor:
+                if previous_live_score >= trend_carry_floor and (leader_score - previous_live_score) < trend_hold_margin:
+                    return previous_type
+
             if previous_type != leader and previous_live_score >= candidate_floor and (leader_score - previous_live_score) < flip_margin:
                 return previous_type
             if previous_type == leader and (leader_score - runner_up_score) < flip_margin:
                 return previous_type
 
+        if signal_score < candidate_floor or confidence < confidence_floor:
+            return SignalType.NEUTRAL
         if (leader_score - runner_up_score) < flip_margin:
             return SignalType.NEUTRAL
         return leader

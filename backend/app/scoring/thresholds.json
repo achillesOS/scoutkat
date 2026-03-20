@@ -3,6 +3,8 @@
   "high_priority_signal_floor": 75,
   "confidence_floor": 0.6,
   "signal_flip_margin": 6,
+  "signal_trend_carry_floor": 52,
+  "signal_trend_hold_margin": 10,
   "social_stale_minutes": 30,
   "signal_cooldown_minutes": 90
 }
