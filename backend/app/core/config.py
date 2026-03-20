@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     trade_hold_hours: int = 6
     trade_min_signal_score: float = 60.0
     trade_min_confidence: float = 0.65
-    trade_default_notional_usd: float = 11.0
-    trade_notional_usd_map: str = "BTC:11,SOL:11"
+    trade_default_notional_usd: float = 25.0
+    trade_notional_usd_map: str = "BTC:80,SOL:25"
     trade_default_leverage: float = 5.0
     trade_leverage_map: str = "BTC:10,SOL:5"
     trade_margin_mode: str = "isolated"

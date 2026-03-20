@@ -213,13 +213,13 @@ services:
       - key: TRADE_MIN_CONFIDENCE
         value: "0.65"
       - key: TRADE_DEFAULT_NOTIONAL_USD
-        value: "11"
+        value: "25"
       - key: TRADE_DEFAULT_LEVERAGE
         value: "5"
       - key: TRADE_LEVERAGE_MAP
         value: BTC:10,SOL:5
       - key: TRADE_NOTIONAL_USD_MAP
-        value: BTC:11,SOL:11
+        value: BTC:80,SOL:25
       - key: TRADE_MARGIN_MODE
         value: isolated
       - key: TRADE_MAX_OPEN_POSITIONS
