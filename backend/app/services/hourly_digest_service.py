@@ -40,7 +40,7 @@ class HourlyDigestService:
         previous_sent_run = self.hourly_digest_repository.latest_sent_run()
         previous_rows = self.hourly_digest_repository.rows_for_run(str(previous_sent_run["id"])) if previous_sent_run else []
         changed_rows = _changed_rows(digest_rows, previous_rows)
-        persisted_rows = self._persist_rows(run_record, changed_rows)
+        persisted_rows = self._persist_rows(run_record, digest_rows)
         if not changed_rows:
             provider_result = {"status": "skipped_no_change"}
         else:
@@ -50,7 +50,7 @@ class HourlyDigestService:
             self.hourly_digest_repository.update_run_status(run_record["id"], delivery_status)
         return {
             "symbols": normalized_symbols,
-            "rows": persisted_rows or changed_rows,
+            "rows": persisted_rows or digest_rows,
             "provider_result": provider_result,
         }
 
