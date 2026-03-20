@@ -199,7 +199,7 @@ services:
       - key: HOURLY_DIGEST_SYMBOLS
         value: BTC,ETH,SOL,HYPE,BNB
       - key: TRADE_ENABLED
-        value: "true"
+        value: "false"
       - key: TRADE_EXECUTOR_SYMBOLS
         value: BTC,SOL
       - key: TRADE_SIGNAL_CONFIRMATIONS
